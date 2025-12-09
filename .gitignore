@@ -1,0 +1,26 @@
+# Salesforce
+.sfdx/
+.sf/
+*.log
+*.cls-meta.xml.bak
+
+# IDE
+.vscode/
+.idea/
+*.sublime-*
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Node
+node_modules/
+package-lock.json
+
+# Build
+dist/
+coverage/
+
+# Temp
+*.tmp
+*.bak
