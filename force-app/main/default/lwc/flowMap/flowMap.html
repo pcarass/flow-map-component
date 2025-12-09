@@ -1,0 +1,245 @@
+<template>
+    <!-- Header Section -->
+    <template lwc:if={showHeader}>
+        <div class={headerClasses}>
+            <div class="slds-grid slds-grid_vertical-align-center">
+                <!-- Icon -->
+                <template lwc:if={iconName}>
+                    <lightning-icon 
+                        icon-name={iconName} 
+                        size="small" 
+                        class="slds-m-right_small">
+                    </lightning-icon>
+                </template>
+                
+                <!-- Title and Caption -->
+                <div class="slds-col slds-grow">
+                    <template lwc:if={title}>
+                        <h2 class="slds-text-heading_medium">{title}</h2>
+                    </template>
+                    <template lwc:if={caption}>
+                        <p class="slds-text-body_small slds-text-color_weak">{caption}</p>
+                    </template>
+                </div>
+                
+                <!-- Search Bar -->
+                <template lwc:if={isSearchable}>
+                    <div class={searchContainerClasses}>
+                        <lightning-input
+                            type="search"
+                            placeholder={searchPlaceholder}
+                            value={searchTerm}
+                            onchange={handleSearchChange}
+                            class="slds-m-right_small">
+                        </lightning-input>
+                    </div>
+                </template>
+                
+                <!-- Filter Button -->
+                <template lwc:if={showFilterOption}>
+                    <lightning-button-icon
+                        icon-name="utility:filterList"
+                        alternative-text="Filter"
+                        title="Filter"
+                        onclick={handleFilterClick}
+                        class="slds-m-right_small">
+                    </lightning-button-icon>
+                </template>
+                
+                <!-- Header Buttons -->
+                <template for:each={headerButtons} for:item="button">
+                    <lightning-button
+                        key={button.name}
+                        label={button.label}
+                        variant={button.variant}
+                        icon-name={button.iconName}
+                        onclick={handleHeaderButtonClick}
+                        data-name={button.name}
+                        class="slds-m-left_x-small">
+                    </lightning-button>
+                </template>
+            </div>
+        </div>
+    </template>
+    
+    <!-- Filter Popover -->
+    <template lwc:if={isFilterOpen}>
+        <section class="slds-popover slds-popover_medium slds-nubbin_top-right filter-popover" role="dialog">
+            <button class="slds-button slds-button_icon slds-button_icon-small slds-float_right slds-popover__close" 
+                    title="Close" 
+                    onclick={handleFilterClose}>
+                <lightning-icon icon-name="utility:close" size="x-small"></lightning-icon>
+            </button>
+            <div class="slds-popover__body">
+                <template for:each={filterFields} for:item="filter">
+                    <div key={filter.fieldName} class="slds-m-bottom_small">
+                        <template lwc:if={filter.isPicklist}>
+                            <lightning-combobox
+                                label={filter.label}
+                                value={filter.value}
+                                options={filter.options}
+                                onchange={handleFilterChange}
+                                data-field={filter.fieldName}>
+                            </lightning-combobox>
+                        </template>
+                        <template lwc:else>
+                            <lightning-input
+                                type={filter.type}
+                                label={filter.label}
+                                value={filter.value}
+                                onchange={handleFilterChange}
+                                data-field={filter.fieldName}>
+                            </lightning-input>
+                        </template>
+                    </div>
+                </template>
+                <div class="slds-m-top_medium">
+                    <lightning-button label="Apply Filters" variant="brand" onclick={applyFilters}></lightning-button>
+                    <lightning-button label="Clear" onclick={clearFilters} class="slds-m-left_small"></lightning-button>
+                </div>
+            </div>
+        </section>
+    </template>
+    
+    <!-- Main Content -->
+    <div class={mainContainerClasses}>
+        <!-- List View (Left Panel) -->
+        <template lwc:if={showListView}>
+            <div class="list-view-container">
+                <template lwc:if={isLoading}>
+                    <lightning-spinner alternative-text="Loading" size="small"></lightning-spinner>
+                </template>
+                <template lwc:else>
+                    <ul class="slds-has-dividers_bottom-space">
+                        <template for:each={filteredMarkers} for:item="marker" for:index="index">
+                            <li key={marker.id} 
+                                class={marker.listItemClass}
+                                onclick={handleListItemClick}
+                                data-id={marker.id}
+                                data-index={index}>
+                                <article class="slds-tile slds-tile_board">
+                                    <h3 class="slds-tile__title slds-truncate" title={marker.title}>
+                                        <a href="javascript:void(0);">{marker.title}</a>
+                                    </h3>
+                                    <div class="slds-tile__detail">
+                                        <template lwc:if={marker.description}>
+                                            <p class="slds-text-body_small slds-truncate">{marker.description}</p>
+                                        </template>
+                                        <template lwc:if={marker.address}>
+                                            <p class="slds-text-body_small slds-text-color_weak">
+                                                <lightning-icon icon-name="utility:location" size="xx-small" class="slds-m-right_xx-small"></lightning-icon>
+                                                {marker.address}
+                                            </p>
+                                        </template>
+                                    </div>
+                                </article>
+                            </li>
+                        </template>
+                    </ul>
+                    <template lwc:if={noResults}>
+                        <div class="slds-align_absolute-center slds-p-around_medium">
+                            <p class="slds-text-color_weak">No locations found</p>
+                        </div>
+                    </template>
+                </template>
+            </div>
+        </template>
+        
+        <!-- Map Container -->
+        <div class="map-container" lwc:ref="mapContainer">
+            <template lwc:if={isLoading}>
+                <div class="slds-align_absolute-center slds-p-around_large">
+                    <lightning-spinner alternative-text="Loading map" size="medium"></lightning-spinner>
+                </div>
+            </template>
+            
+            <!-- Google Maps -->
+            <template lwc:if={useGoogleMaps}>
+                <lightning-map
+                    map-markers={googleMapMarkers}
+                    selected-marker-value={selectedMarkerValue}
+                    center={mapCenter}
+                    zoom-level={zoomLevel}
+                    list-view={listViewVisibility}
+                    onmarkerselect={handleGoogleMarkerSelect}
+                    class="google-map">
+                </lightning-map>
+            </template>
+            
+            <!-- Leaflet Maps Container -->
+            <template lwc:if={useLeafletMaps}>
+                <div lwc:ref="leafletMap" class="leaflet-map-container"></div>
+            </template>
+        </div>
+    </div>
+    
+    <!-- Drawing Toolbar (Leaflet Only) -->
+    <template lwc:if={showDrawingToolbar}>
+        <div class={drawingToolbarClasses}>
+            <lightning-button-group>
+                <template lwc:if={drawTools.marker}>
+                    <lightning-button-icon
+                        icon-name="utility:location"
+                        alternative-text="Add Marker"
+                        title="Add Marker"
+                        onclick={handleDrawMarker}
+                        class={markerToolClass}>
+                    </lightning-button-icon>
+                </template>
+                <template lwc:if={drawTools.line}>
+                    <lightning-button-icon
+                        icon-name="utility:dash"
+                        alternative-text="Draw Line"
+                        title="Draw Line"
+                        onclick={handleDrawLine}
+                        class={lineToolClass}>
+                    </lightning-button-icon>
+                </template>
+                <template lwc:if={drawTools.polygon}>
+                    <lightning-button-icon
+                        icon-name="utility:change_record_type"
+                        alternative-text="Draw Polygon"
+                        title="Draw Polygon"
+                        onclick={handleDrawPolygon}
+                        class={polygonToolClass}>
+                    </lightning-button-icon>
+                </template>
+                <template lwc:if={drawTools.circle}>
+                    <lightning-button-icon
+                        icon-name="utility:record"
+                        alternative-text="Draw Circle"
+                        title="Draw Circle"
+                        onclick={handleDrawCircle}
+                        class={circleToolClass}>
+                    </lightning-button-icon>
+                </template>
+                <template lwc:if={drawTools.edit}>
+                    <lightning-button-icon
+                        icon-name="utility:edit"
+                        alternative-text="Edit"
+                        title="Edit Shapes"
+                        onclick={handleEditMode}
+                        class={editToolClass}>
+                    </lightning-button-icon>
+                </template>
+                <template lwc:if={drawTools.delete}>
+                    <lightning-button-icon
+                        icon-name="utility:delete"
+                        alternative-text="Delete"
+                        title="Delete Shapes"
+                        onclick={handleDeleteMode}
+                        class={deleteToolClass}>
+                    </lightning-button-icon>
+                </template>
+            </lightning-button-group>
+        </div>
+    </template>
+    
+    <!-- Error Display -->
+    <template lwc:if={errorMessage}>
+        <div class="slds-notify slds-notify_alert slds-alert_error slds-m-top_small" role="alert">
+            <lightning-icon icon-name="utility:error" size="x-small" class="slds-m-right_x-small"></lightning-icon>
+            <span>{errorMessage}</span>
+        </div>
+    </template>
+</template>
