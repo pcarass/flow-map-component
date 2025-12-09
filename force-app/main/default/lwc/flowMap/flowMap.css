@@ -1,0 +1,245 @@
+/* Main Container Styles */
+:host {
+    display: block;
+}
+
+/* Header Styles */
+.joined-header {
+    border-bottom: 1px solid #dddbda;
+    box-shadow: none;
+}
+
+/* Map Container */
+.map-main-container {
+    position: relative;
+    width: 100%;
+    min-height: 400px;
+}
+
+.map-main-container.with-list-view {
+    display: flex;
+}
+
+.map-container {
+    flex: 1;
+    min-height: 400px;
+    position: relative;
+}
+
+.google-map {
+    height: 100%;
+    min-height: 400px;
+}
+
+.leaflet-map-container {
+    height: 100%;
+    min-height: 400px;
+    width: 100%;
+}
+
+/* List View Styles */
+.list-view-container {
+    width: 300px;
+    min-width: 250px;
+    max-width: 350px;
+    border-right: 1px solid #dddbda;
+    overflow-y: auto;
+    max-height: 500px;
+    background-color: #fff;
+}
+
+.marker-list-item {
+    cursor: pointer;
+    transition: background-color 0.2s ease;
+    padding: 0.5rem;
+}
+
+.marker-list-item:hover {
+    background-color: #f3f2f2;
+}
+
+.marker-list-item.selected {
+    background-color: #e5f2fd;
+    border-left: 3px solid #0070d2;
+}
+
+.marker-list-item .slds-tile__title a {
+    color: #0070d2;
+    text-decoration: none;
+}
+
+.marker-list-item .slds-tile__title a:hover {
+    text-decoration: underline;
+}
+
+/* Search Container */
+.search-container {
+    display: flex;
+    align-items: center;
+}
+
+.search-container.slds-grow {
+    flex: 1;
+    max-width: 400px;
+}
+
+/* Filter Popover */
+.filter-popover {
+    position: absolute;
+    top: 60px;
+    right: 20px;
+    z-index: 9999;
+    min-width: 300px;
+}
+
+/* Drawing Toolbar */
+.drawing-toolbar {
+    position: absolute;
+    z-index: 1000;
+    background: white;
+    padding: 8px;
+    border-radius: 4px;
+    box-shadow: 0 2px 6px rgba(0, 0, 0, 0.2);
+}
+
+.drawing-toolbar.toolbar-top-left {
+    top: 10px;
+    left: 10px;
+}
+
+.drawing-toolbar.toolbar-top-right {
+    top: 10px;
+    right: 10px;
+}
+
+.drawing-toolbar.toolbar-bottom-left {
+    bottom: 10px;
+    left: 10px;
+}
+
+.drawing-toolbar.toolbar-bottom-right {
+    bottom: 10px;
+    right: 10px;
+}
+
+.tool-active {
+    background-color: #0070d2 !important;
+    color: white !important;
+}
+
+/* Custom Leaflet Marker Styles */
+.custom-div-icon {
+    background: transparent;
+    border: none;
+}
+
+.center-marker {
+    background: transparent;
+    border: none;
+}
+
+/* Marker Popup Styles */
+.marker-popup {
+    padding: 4px;
+}
+
+.marker-popup strong {
+    display: block;
+    margin-bottom: 4px;
+    font-size: 14px;
+}
+
+.marker-popup p {
+    margin: 2px 0;
+    font-size: 12px;
+}
+
+.marker-popup .address {
+    color: #706e6b;
+}
+
+/* Loading State */
+.slds-align_absolute-center {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    height: 100%;
+}
+
+/* Responsive Adjustments */
+@media (max-width: 768px) {
+    .map-main-container.with-list-view {
+        flex-direction: column;
+    }
+    
+    .list-view-container {
+        width: 100%;
+        max-width: none;
+        max-height: 200px;
+        border-right: none;
+        border-bottom: 1px solid #dddbda;
+    }
+    
+    .filter-popover {
+        left: 10px;
+        right: 10px;
+        min-width: auto;
+    }
+}
+
+/* Cluster Marker Styles (for Leaflet Marker Cluster) */
+.marker-cluster-small {
+    background-color: rgba(181, 226, 140, 0.6);
+}
+
+.marker-cluster-small div {
+    background-color: rgba(110, 204, 57, 0.6);
+}
+
+.marker-cluster-medium {
+    background-color: rgba(241, 211, 87, 0.6);
+}
+
+.marker-cluster-medium div {
+    background-color: rgba(240, 194, 12, 0.6);
+}
+
+.marker-cluster-large {
+    background-color: rgba(253, 156, 115, 0.6);
+}
+
+.marker-cluster-large div {
+    background-color: rgba(241, 128, 23, 0.6);
+}
+
+.marker-cluster {
+    background-clip: padding-box;
+    border-radius: 20px;
+}
+
+.marker-cluster div {
+    width: 30px;
+    height: 30px;
+    margin-left: 5px;
+    margin-top: 5px;
+    text-align: center;
+    border-radius: 15px;
+    font: 12px "Salesforce Sans", Arial, sans-serif;
+    font-weight: bold;
+    color: #333;
+}
+
+.marker-cluster span {
+    line-height: 30px;
+}
+
+/* GeoJSON Layer Styles */
+.leaflet-interactive {
+    cursor: pointer;
+}
+
+/* Error Display */
+.slds-notify_alert {
+    display: flex;
+    align-items: center;
+}
