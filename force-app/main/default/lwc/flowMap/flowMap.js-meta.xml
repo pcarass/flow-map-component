@@ -1,0 +1,230 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<LightningComponentBundle xmlns="http://soap.sforce.com/2006/04/metadata">
+    <apiVersion>59.0</apiVersion>
+    <isExposed>true</isExposed>
+    <masterLabel>Flow Map</masterLabel>
+    <description>A comprehensive map component for Flow screens supporting Google Maps and Leaflet with markers, clustering, drawing, and GeoJSON features.</description>
+    <targets>
+        <target>lightning__FlowScreen</target>
+    </targets>
+    <targetConfigs>
+        <targetConfig targets="lightning__FlowScreen">
+            <!-- ============================================ -->
+            <!-- BASIC CONFIGURATION -->
+            <!-- ============================================ -->
+            <property name="title" type="String" label="Title" description="The title displayed in the header"/>
+            <property name="caption" type="String" label="Caption" description="A caption/subtitle displayed below the title"/>
+            <property name="iconName" type="String" label="Icon Name" description="SLDS icon name for the header (e.g., utility:location)"/>
+            <property name="height" type="String" label="Map Height" default="400px" description="Height of the map container (e.g., 400px, 50vh)"/>
+            <property name="isJoined" type="Boolean" label="Is Joined" default="false" description="When true, gives the header a flat bottom for joining with other components"/>
+            
+            <!-- ============================================ -->
+            <!-- MAP TYPE SELECTION -->
+            <!-- ============================================ -->
+            <property name="mapType" type="String" label="Map Type" default="google" 
+                      datasource="google,leaflet"
+                      description="Select Google Maps (max 100 markers) or Leaflet (unlimited markers, clustering, drawing)"/>
+            
+            <!-- ============================================ -->
+            <!-- DATA SOURCE CONFIGURATION -->
+            <!-- ============================================ -->
+            <property name="dataSourceType" type="String" label="Data Source Type" default="query" 
+                      datasource="manual,variable,query"
+                      description="How to populate markers: Manual (JSON), Variable (Flow variable), or Query (SOQL)"/>
+            <property name="objectApiName" type="String" label="Object API Name" 
+                      description="The Salesforce object to query for markers (e.g., Account, Contact, Custom__c)"/>
+            <property name="queryFilter" type="String" label="Query Filter (WHERE clause)" 
+                      description="Additional SOQL WHERE clause to filter records (without WHERE keyword)"/>
+            <property name="recordLimit" type="Integer" label="Record Limit" default="100" 
+                      description="Maximum number of records to retrieve"/>
+            <property name="markersJson" type="String" label="Markers JSON" role="inputOnly"
+                      description="JSON array of marker objects for manual/variable data source. Each object should have: title, latitude, longitude, description, address"/>
+            
+            <!-- ============================================ -->
+            <!-- FIELD MAPPINGS -->
+            <!-- ============================================ -->
+            <property name="titleField" type="String" label="Title Field" 
+                      description="API name of the field to use for marker title (e.g., Name)"/>
+            <property name="descriptionField" type="String" label="Description Field" 
+                      description="API name of the field for marker description"/>
+            <property name="addressField" type="String" label="Address Field" 
+                      description="API name of a compound address field or full address text field"/>
+            <property name="latitudeField" type="String" label="Latitude Field" 
+                      description="API name of the latitude field (required for Leaflet)"/>
+            <property name="longitudeField" type="String" label="Longitude Field" 
+                      description="API name of the longitude field (required for Leaflet)"/>
+            <property name="cityField" type="String" label="City Field" description="API name of the city field"/>
+            <property name="stateField" type="String" label="State/Province Field" description="API name of the state field"/>
+            <property name="postalCodeField" type="String" label="Postal Code Field" description="API name of the postal code field"/>
+            <property name="countryField" type="String" label="Country Field" description="API name of the country field"/>
+            <property name="recordIdField" type="String" label="Record ID Field" default="Id" 
+                      description="API name of the record ID field"/>
+            
+            <!-- ============================================ -->
+            <!-- MAP CENTER CONFIGURATION -->
+            <!-- ============================================ -->
+            <property name="centerLatitude" type="String" label="Center Latitude" 
+                      description="Latitude for the map center point"/>
+            <property name="centerLongitude" type="String" label="Center Longitude" 
+                      description="Longitude for the map center point"/>
+            <property name="centerCity" type="String" label="Center City" 
+                      description="City for address-based center (alternative to coordinates)"/>
+            <property name="centerState" type="String" label="Center State/Province" 
+                      description="State for address-based center"/>
+            <property name="centerPostalCode" type="String" label="Center Postal Code" 
+                      description="Postal code for address-based center"/>
+            <property name="centerCountry" type="String" label="Center Country" 
+                      description="Country for address-based center (required if using address)"/>
+            <property name="centerStreet" type="String" label="Center Street" 
+                      description="Street address for center point"/>
+            <property name="displayCenterAsMarker" type="Boolean" label="Display Center as Marker" default="false" 
+                      description="Show a marker at the center point"/>
+            
+            <!-- ============================================ -->
+            <!-- ZOOM CONFIGURATION -->
+            <!-- ============================================ -->
+            <property name="zoomLevel" type="Integer" label="Zoom Level" default="10" 
+                      description="Initial zoom level (1-22). 1=World, 5=Continent, 10=City, 15=Streets, 20=Buildings"/>
+            
+            <!-- ============================================ -->
+            <!-- MARKER CONFIGURATION -->
+            <!-- ============================================ -->
+            <property name="markerType" type="String" label="Marker Type" default="default" 
+                      datasource="default,circle,rectangle,polygon,pin,customIcon"
+                      description="The type of marker to display on the map"/>
+            <property name="markerFillColor" type="String" label="Marker Fill Color" default="#EA4335" 
+                      description="Fill color for markers (hex code)"/>
+            <property name="markerFillOpacity" type="String" label="Marker Fill Opacity" default="0.7" 
+                      description="Fill opacity for markers (0-1)"/>
+            <property name="markerStrokeColor" type="String" label="Marker Stroke Color" default="#C62828" 
+                      description="Border/stroke color for markers (hex code)"/>
+            <property name="markerStrokeWidth" type="Integer" label="Marker Stroke Width" default="2" 
+                      description="Border/stroke width in pixels"/>
+            <property name="markerRadius" type="Integer" label="Marker Radius" default="10" 
+                      description="Radius for circle markers in pixels"/>
+            <property name="markerScale" type="String" label="Marker Scale" default="1" 
+                      description="Scale factor for marker size"/>
+            <property name="customIconSvg" type="String" label="Custom Icon SVG" 
+                      description="SVG markup for custom marker icon"/>
+            <property name="customIconField" type="String" label="Custom Icon Field" 
+                      description="Field API name containing SVG or icon identifier for each record"/>
+            
+            <!-- ============================================ -->
+            <!-- MARKER CLUSTERING (LEAFLET ONLY) -->
+            <!-- ============================================ -->
+            <property name="enableClustering" type="Boolean" label="Enable Marker Clustering" default="false" 
+                      description="Group nearby markers into clusters (Leaflet only)"/>
+            <property name="showCoverageOnHover" type="Boolean" label="Show Coverage on Hover" default="true" 
+                      description="Show cluster boundary on hover"/>
+            <property name="maxClusterRadius" type="Integer" label="Max Cluster Radius" default="80" 
+                      description="Maximum radius in pixels for clustering"/>
+            <property name="disableClusteringAtZoom" type="Integer" label="Disable Clustering at Zoom" 
+                      description="Zoom level at which to show all individual markers"/>
+            
+            <!-- ============================================ -->
+            <!-- DRAWING FEATURES (LEAFLET ONLY) -->
+            <!-- ============================================ -->
+            <property name="enableDrawing" type="Boolean" label="Enable Drawing" default="false" 
+                      description="Allow users to draw shapes on the map (Leaflet only)"/>
+            <property name="drawToolMarker" type="Boolean" label="Draw Tool: Marker" default="true" 
+                      description="Enable marker drawing tool"/>
+            <property name="drawToolLine" type="Boolean" label="Draw Tool: Line" default="true" 
+                      description="Enable line/polyline drawing tool"/>
+            <property name="drawToolPolygon" type="Boolean" label="Draw Tool: Polygon" default="true" 
+                      description="Enable polygon drawing tool"/>
+            <property name="drawToolCircle" type="Boolean" label="Draw Tool: Circle" default="true" 
+                      description="Enable circle drawing tool"/>
+            <property name="drawToolEdit" type="Boolean" label="Draw Tool: Edit" default="true" 
+                      description="Enable edit mode for existing shapes"/>
+            <property name="drawToolDelete" type="Boolean" label="Draw Tool: Delete" default="true" 
+                      description="Enable delete mode for shapes"/>
+            <property name="drawToolbarPosition" type="String" label="Drawing Toolbar Position" default="topright" 
+                      datasource="topleft,topright,bottomleft,bottomright"
+                      description="Position of the drawing toolbar"/>
+            
+            <!-- ============================================ -->
+            <!-- DRAWING SAVE CONFIGURATION -->
+            <!-- ============================================ -->
+            <property name="saveAsContentDocument" type="Boolean" label="Save as Content Document" default="false" 
+                      description="Save drawings as a Salesforce Content Document"/>
+            <property name="autoSaveContentDocument" type="Boolean" label="Auto Save Content Document" default="false" 
+                      description="Automatically save drawings when modified"/>
+            <property name="contentDocumentLinkedEntityId" type="String" label="Content Document Linked Entity ID" 
+                      description="Record ID to link the Content Document to"/>
+            <property name="contentDocumentId" type="String" label="Existing Content Document ID" 
+                      description="ID of an existing Content Document to update"/>
+            <property name="contentDocumentTitle" type="String" label="Content Document Title" 
+                      default="Flow Map Drawing Document" 
+                      description="Title for the saved Content Document"/>
+            
+            <!-- ============================================ -->
+            <!-- GEOJSON CONFIGURATION -->
+            <!-- ============================================ -->
+            <property name="geoJsonValue" type="String" label="GeoJSON Value (Read-Only)" 
+                      description="GeoJSON for static display. Can be: GeoJSON object, array of objects, or Content Document ID"/>
+            <property name="drawContentDocumentId" type="String" label="Draw Content Document ID (Editable)" 
+                      description="Content Document ID containing editable GeoJSON shapes"/>
+            
+            <!-- ============================================ -->
+            <!-- LIST VIEW CONFIGURATION -->
+            <!-- ============================================ -->
+            <property name="listViewVisibility" type="String" label="List View" default="auto" 
+                      datasource="visible,hidden,auto"
+                      description="Show location list: visible (always), hidden (never), auto (when multiple markers)"/>
+            
+            <!-- ============================================ -->
+            <!-- SEARCH CONFIGURATION -->
+            <!-- ============================================ -->
+            <property name="isSearchable" type="Boolean" label="Enable Search" default="false" 
+                      description="Show a search bar to filter locations"/>
+            <property name="searchPlaceholder" type="String" label="Search Placeholder" 
+                      default="Search locations..." 
+                      description="Placeholder text for the search input"/>
+            <property name="searchPosition" type="String" label="Search Position" default="right" 
+                      datasource="left,right,center,fill"
+                      description="Position of the search bar in the header"/>
+            
+            <!-- ============================================ -->
+            <!-- FILTER CONFIGURATION -->
+            <!-- ============================================ -->
+            <property name="showFilterOption" type="Boolean" label="Show Filter Option" default="false" 
+                      description="Show a filter button with popover"/>
+            <property name="filterFieldsJson" type="String" label="Filter Fields JSON" 
+                      description="JSON array defining filter fields. Each object: {fieldName, label, type, options (for picklist)}"/>
+            
+            <!-- ============================================ -->
+            <!-- HEADER BUTTONS -->
+            <!-- ============================================ -->
+            <property name="headerButtonsJson" type="String" label="Header Buttons JSON" 
+                      description="JSON array of header buttons. Each object: {name, label, variant, iconName}"/>
+            
+            <!-- ============================================ -->
+            <!-- MARKER DRAGGING -->
+            <!-- ============================================ -->
+            <property name="enableMarkerDrag" type="Boolean" label="Enable Marker Drag" default="false" 
+                      description="Allow users to drag markers to new positions (Leaflet only)"/>
+            
+            <!-- ============================================ -->
+            <!-- OUTPUT ATTRIBUTES -->
+            <!-- ============================================ -->
+            <property name="selectedMarkerId" type="String" label="Selected Marker ID" role="outputOnly" 
+                      description="The ID of the selected marker"/>
+            <property name="selectedMarkerTitle" type="String" label="Selected Marker Title" role="outputOnly" 
+                      description="The title of the selected marker"/>
+            <property name="selectedMarkerLatitude" type="String" label="Selected Marker Latitude" role="outputOnly" 
+                      description="Latitude of the selected marker"/>
+            <property name="selectedMarkerLongitude" type="String" label="Selected Marker Longitude" role="outputOnly" 
+                      description="Longitude of the selected marker"/>
+            <property name="selectedMarkerData" type="String" label="Selected Marker Data (JSON)" role="outputOnly" 
+                      description="Full data of the selected marker as JSON"/>
+            <property name="drawnShapesGeoJson" type="String" label="Drawn Shapes GeoJSON" role="outputOnly" 
+                      description="GeoJSON of all drawn shapes"/>
+            <property name="draggedMarkerData" type="String" label="Dragged Marker Data (JSON)" role="outputOnly" 
+                      description="Data of the last dragged marker including old and new coordinates"/>
+            <property name="headerActionName" type="String" label="Header Action Name" role="outputOnly" 
+                      description="Name of the last clicked header button"/>
+            <property name="contentDocumentIdOutput" type="String" label="Content Document ID (Output)" role="outputOnly" 
+                      description="ID of the saved Content Document"/>
+        </targetConfig>
+    </targetConfigs>
+</LightningComponentBundle>
