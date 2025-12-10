@@ -382,7 +382,7 @@
                              class={type.className} 
                              onclick={handleMarkerTypeChange} 
                              data-value={type.value}>
-                            <div class="marker-type-preview" innerHTML={type.preview}></div>
+                            <div class="marker-type-preview" lwc:inner-html={type.preview}></div>
                             <div class="marker-type-name">{type.label}</div>
                         </div>
                     </template>
