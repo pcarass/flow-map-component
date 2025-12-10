@@ -24,8 +24,8 @@ export default class FlowMap extends LightningElement {
     // Map Type Selection
     @api mapType = 'google'; // 'google' or 'leaflet'
     
-    // Data Source Configuration
-    @api dataSourceType = 'query'; // 'manual', 'variable', 'query'
+    // Data Source Configuration (renamed from dataSourceType)
+    @api sourceType = 'query'; // 'manual', 'variable', 'query'
     @api objectApiName;
     @api queryFilter;
     @api recordLimit = 100;
@@ -44,6 +44,7 @@ export default class FlowMap extends LightningElement {
     @api postalCodeField;
     @api countryField;
     @api recordIdField = 'Id';
+    @api customIconField; // Field containing SVG or icon identifier
     
     // Map Center Configuration
     @api centerLatitude;
@@ -67,22 +68,21 @@ export default class FlowMap extends LightningElement {
     @api markerRadius = 10;
     @api markerScale = 1;
     @api customIconSvg;
-    @api customIconField; // Field containing SVG or icon identifier
     
-    // Marker Clustering (Leaflet Only)
+    // Marker Clustering (Leaflet Only) - Boolean defaults changed to false
     @api enableClustering = false;
-    @api showCoverageOnHover = true;
+    @api showCoverageOnHover = false; // Changed from true
     @api maxClusterRadius = 80;
     @api disableClusteringAtZoom;
     
-    // Drawing Features (Leaflet Only)
+    // Drawing Features (Leaflet Only) - Boolean defaults changed to false
     @api enableDrawing = false;
-    @api drawToolMarker = true;
-    @api drawToolLine = true;
-    @api drawToolPolygon = true;
-    @api drawToolCircle = true;
-    @api drawToolEdit = true;
-    @api drawToolDelete = true;
+    @api drawToolMarker = false; // Changed from true
+    @api drawToolLine = false; // Changed from true
+    @api drawToolPolygon = false; // Changed from true
+    @api drawToolCircle = false; // Changed from true
+    @api drawToolEdit = false; // Changed from true
+    @api drawToolDelete = false; // Changed from true
     @api drawToolbarPosition = 'topright'; // 'topleft', 'topright', 'bottomleft', 'bottomright'
     
     // Drawing Save Configuration
@@ -368,7 +368,7 @@ export default class FlowMap extends LightningElement {
         this.errorMessage = null;
         
         try {
-            if (this.dataSourceType === 'manual' || this.dataSourceType === 'variable') {
+            if (this.sourceType === 'manual' || this.sourceType === 'variable') {
                 await this.loadMarkersFromJson();
             } else {
                 await this.loadMarkersFromQuery();
