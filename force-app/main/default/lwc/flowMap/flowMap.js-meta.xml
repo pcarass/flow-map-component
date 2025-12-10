@@ -8,7 +8,7 @@
         <target>lightning__FlowScreen</target>
     </targets>
     <targetConfigs>
-        <targetConfig targets="lightning__FlowScreen">
+        <targetConfig targets="lightning__FlowScreen" configurationEditor="c-flow-map-cpe">
             <!-- ============================================ -->
             <!-- BASIC CONFIGURATION -->
             <!-- ============================================ -->
