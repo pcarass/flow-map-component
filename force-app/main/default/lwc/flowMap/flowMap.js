@@ -42,6 +42,7 @@ export default class FlowMap extends LightningElement {
     @api cityField;
     @api stateField;
     @api postalCodeField;
+    @api streetField;
     @api countryField;
     @api recordIdField = 'Id';
     @api customIconField; // Field containing SVG or icon identifier
@@ -423,6 +424,7 @@ export default class FlowMap extends LightningElement {
             cityField: this.cityField,
             stateField: this.stateField,
             postalCodeField: this.postalCodeField,
+            streetField: this.streetField,
             countryField: this.countryField,
             recordIdField: this.recordIdField,
             customIconField: this.customIconField
