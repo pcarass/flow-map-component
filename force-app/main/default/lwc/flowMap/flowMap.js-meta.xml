@@ -28,7 +28,7 @@
             <!-- ============================================ -->
             <!-- DATA SOURCE CONFIGURATION -->
             <!-- ============================================ -->
-            <property name="dataSourceType" type="String" label="Data Source Type" default="query" 
+            <property name="sourceType" type="String" label="Data Source Type" default="query" 
                       datasource="manual,variable,query"
                       description="How to populate markers: Manual (JSON), Variable (Flow variable), or Query (SOQL)"/>
             <property name="objectApiName" type="String" label="Object API Name" 
@@ -114,7 +114,7 @@
             <!-- ============================================ -->
             <property name="enableClustering" type="Boolean" label="Enable Marker Clustering" default="false" 
                       description="Group nearby markers into clusters (Leaflet only)"/>
-            <property name="showCoverageOnHover" type="Boolean" label="Show Coverage on Hover" default="true" 
+            <property name="showCoverageOnHover" type="Boolean" label="Show Coverage on Hover" default="false" 
                       description="Show cluster boundary on hover"/>
             <property name="maxClusterRadius" type="Integer" label="Max Cluster Radius" default="80" 
                       description="Maximum radius in pixels for clustering"/>
@@ -126,17 +126,17 @@
             <!-- ============================================ -->
             <property name="enableDrawing" type="Boolean" label="Enable Drawing" default="false" 
                       description="Allow users to draw shapes on the map (Leaflet only)"/>
-            <property name="drawToolMarker" type="Boolean" label="Draw Tool: Marker" default="true" 
+            <property name="drawToolMarker" type="Boolean" label="Draw Tool: Marker" default="false" 
                       description="Enable marker drawing tool"/>
-            <property name="drawToolLine" type="Boolean" label="Draw Tool: Line" default="true" 
+            <property name="drawToolLine" type="Boolean" label="Draw Tool: Line" default="false" 
                       description="Enable line/polyline drawing tool"/>
-            <property name="drawToolPolygon" type="Boolean" label="Draw Tool: Polygon" default="true" 
+            <property name="drawToolPolygon" type="Boolean" label="Draw Tool: Polygon" default="false" 
                       description="Enable polygon drawing tool"/>
-            <property name="drawToolCircle" type="Boolean" label="Draw Tool: Circle" default="true" 
+            <property name="drawToolCircle" type="Boolean" label="Draw Tool: Circle" default="false" 
                       description="Enable circle drawing tool"/>
-            <property name="drawToolEdit" type="Boolean" label="Draw Tool: Edit" default="true" 
+            <property name="drawToolEdit" type="Boolean" label="Draw Tool: Edit" default="false" 
                       description="Enable edit mode for existing shapes"/>
-            <property name="drawToolDelete" type="Boolean" label="Draw Tool: Delete" default="true" 
+            <property name="drawToolDelete" type="Boolean" label="Draw Tool: Delete" default="false" 
                       description="Enable delete mode for shapes"/>
             <property name="drawToolbarPosition" type="String" label="Drawing Toolbar Position" default="topright" 
                       datasource="topleft,topright,bottomleft,bottomright"
