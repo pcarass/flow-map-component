@@ -116,7 +116,7 @@
                         <lightning-textarea 
                             label="Markers JSON" 
                             value={markersJson}
-                            placeholder='[{"title": "Office", "latitude": 37.7749, "longitude": -122.4194}]'
+                            placeholder="See help text for format"
                             field-level-help="JSON array of marker objects with title, latitude, longitude, description, etc."
                             onchange={handleMarkersJsonChange}>
                         </lightning-textarea>
@@ -458,7 +458,7 @@
                     <lightning-textarea 
                         label="Custom Icon SVG" 
                         value={customIconSvg}
-                        placeholder='<svg viewBox="0 0 24 24">...</svg>'
+                        placeholder="Enter SVG markup"
                         field-level-help="SVG markup for custom marker icon"
                         onchange={handleCustomIconSvgChange}>
                     </lightning-textarea>
@@ -656,7 +656,7 @@
                     <lightning-textarea 
                         label="GeoJSON Value (Read-Only Display)" 
                         value={geoJsonValue}
-                        placeholder='{"type": "FeatureCollection", "features": [...]}'
+                        placeholder="Enter GeoJSON or Content Document ID"
                         field-level-help="GeoJSON for static display. Can be JSON object, array, or Content Document ID"
                         onchange={handleGeoJsonValueChange}>
                     </lightning-textarea>
@@ -719,7 +719,7 @@
                 <lightning-textarea 
                     label="Header Buttons JSON" 
                     value={headerButtonsJson}
-                    placeholder='[{"name": "refresh", "label": "Refresh", "variant": "neutral", "iconName": "utility:refresh"}]'
+                    placeholder="See help text for format"
                     field-level-help="JSON array of button configurations"
                     onchange={handleHeaderButtonsJsonChange}>
                 </lightning-textarea>
@@ -788,7 +788,7 @@
                         <lightning-textarea 
                             label="Filter Fields JSON" 
                             value={filterFieldsJson}
-                            placeholder='[{"fieldName": "Industry", "label": "Industry", "type": "picklist"}]'
+                            placeholder="See help text for format"
                             field-level-help="JSON array defining filter fields"
                             onchange={handleFilterFieldsJsonChange}>
                         </lightning-textarea>
