@@ -56,6 +56,7 @@
             <property name="cityField" type="String" label="City Field" description="API name of the city field"/>
             <property name="stateField" type="String" label="State/Province Field" description="API name of the state field"/>
             <property name="postalCodeField" type="String" label="Postal Code Field" description="API name of the postal code field"/>
+            <property name="streetField" type="String" label="Street Field" description="API name of the street field"/>
             <property name="countryField" type="String" label="Country Field" description="API name of the country field"/>
             <property name="recordIdField" type="String" label="Record ID Field" default="Id" 
                       description="API name of the record ID field"/>
