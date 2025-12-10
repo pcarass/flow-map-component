@@ -103,6 +103,11 @@ public with sharing class FlowMapController {
                     markerData.put('postalCode', getFieldValue(record, postalCodeField));
                 }
                 
+
+                String streetField = (String) fieldMappings.get('streetField');
+                if (String.isNotBlank(streetField)) {
+                    markerData.put('street', getFieldValue(record, streetField));
+                }
                 String countryField = (String) fieldMappings.get('countryField');
                 if (String.isNotBlank(countryField)) {
                     markerData.put('country', getFieldValue(record, countryField));
