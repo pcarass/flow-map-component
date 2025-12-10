@@ -1,0 +1,813 @@
+<template>
+    <div class="cpe-container">
+        <!-- ============================================ -->
+        <!-- SECTION 1: MAP TYPE SELECTION -->
+        <!-- ============================================ -->
+        <div class="cpe-section">
+            <div class="section-header" onclick={toggleSection} data-section="mapType">
+                <lightning-icon icon-name="utility:world" size="small" class="section-icon"></lightning-icon>
+                <span class="section-title">Map Type</span>
+                <lightning-icon icon-name={mapTypeSectionIcon} size="x-small" class="chevron"></lightning-icon>
+            </div>
+            <div class={mapTypeSectionClass}>
+                <div class="map-type-selector">
+                    <div class={googleMapClass} onclick={selectGoogleMaps} data-value="google">
+                        <div class="map-type-icon">
+                            <svg viewBox="0 0 24 24" width="48" height="48">
+                                <path fill="#4285F4" d="M12 2C8.13 2 5 5.13 5 9c0 5.25 7 13 7 13s7-7.75 7-13c0-3.87-3.13-7-7-7z"/>
+                                <circle fill="#fff" cx="12" cy="9" r="2.5"/>
+                            </svg>
+                        </div>
+                        <div class="map-type-label">Google Maps</div>
+                        <div class="map-type-desc">Familiar UI, Street View<br/>Max 100 markers</div>
+                    </div>
+                    <div class={leafletMapClass} onclick={selectLeafletMaps} data-value="leaflet">
+                        <div class="map-type-icon">
+                            <svg viewBox="0 0 24 24" width="48" height="48">
+                                <path fill="#3D9970" d="M12 2L2 7l10 5 10-5-10-5zM2 17l10 5 10-5M2 12l10 5 10-5"/>
+                            </svg>
+                        </div>
+                        <div class="map-type-label">Leaflet Maps</div>
+                        <div class="map-type-desc">Clustering, Drawing<br/>Unlimited markers</div>
+                    </div>
+                </div>
+                
+                <lightning-input 
+                    type="text" 
+                    label="Map Height" 
+                    value={height}
+                    placeholder="400px"
+                    field-level-help="CSS height value (e.g., 400px, 50vh)"
+                    onchange={handleHeightChange}>
+                </lightning-input>
+            </div>
+        </div>
+
+        <!-- ============================================ -->
+        <!-- SECTION 2: DATA SOURCE -->
+        <!-- ============================================ -->
+        <div class="cpe-section">
+            <div class="section-header" onclick={toggleSection} data-section="dataSource">
+                <lightning-icon icon-name="utility:database" size="small" class="section-icon"></lightning-icon>
+                <span class="section-title">Data Source</span>
+                <lightning-icon icon-name={dataSourceSectionIcon} size="x-small" class="chevron"></lightning-icon>
+            </div>
+            <div class={dataSourceSectionClass}>
+                <div class="source-type-selector">
+                    <lightning-button-group>
+                        <lightning-button 
+                            label="Query" 
+                            variant={queryButtonVariant}
+                            onclick={handleSourceTypeChange} 
+                            data-value="query">
+                        </lightning-button>
+                        <lightning-button 
+                            label="Variable" 
+                            variant={variableButtonVariant}
+                            onclick={handleSourceTypeChange} 
+                            data-value="variable">
+                        </lightning-button>
+                        <lightning-button 
+                            label="Manual" 
+                            variant={manualButtonVariant}
+                            onclick={handleSourceTypeChange} 
+                            data-value="manual">
+                        </lightning-button>
+                    </lightning-button-group>
+                </div>
+
+                <!-- Query Mode Fields -->
+                <template if:true={isQueryMode}>
+                    <div class="field-group">
+                        <lightning-input 
+                            type="text" 
+                            label="Object API Name" 
+                            value={objectApiName}
+                            placeholder="Account"
+                            required
+                            field-level-help="The Salesforce object to query (e.g., Account, Contact)"
+                            onchange={handleObjectApiNameChange}>
+                        </lightning-input>
+                        
+                        <lightning-input 
+                            type="text" 
+                            label="Query Filter (WHERE clause)" 
+                            value={queryFilter}
+                            placeholder="Industry = 'Technology'"
+                            field-level-help="SOQL WHERE clause without the WHERE keyword"
+                            onchange={handleQueryFilterChange}>
+                        </lightning-input>
+                        
+                        <lightning-input 
+                            type="number" 
+                            label="Record Limit" 
+                            value={recordLimit}
+                            min="1"
+                            max="2000"
+                            field-level-help="Maximum number of records to display"
+                            onchange={handleRecordLimitChange}>
+                        </lightning-input>
+                    </div>
+                </template>
+
+                <!-- Variable/Manual Mode Fields -->
+                <template if:true={isVariableOrManualMode}>
+                    <div class="field-group">
+                        <lightning-textarea 
+                            label="Markers JSON" 
+                            value={markersJson}
+                            placeholder='[{"title": "Office", "latitude": 37.7749, "longitude": -122.4194}]'
+                            field-level-help="JSON array of marker objects with title, latitude, longitude, description, etc."
+                            onchange={handleMarkersJsonChange}>
+                        </lightning-textarea>
+                        <div class="help-text">
+                            <lightning-icon icon-name="utility:info" size="xx-small"></lightning-icon>
+                            <span>For Variable mode, use a Flow variable containing the JSON. For Manual, enter JSON directly.</span>
+                        </div>
+                    </div>
+                </template>
+            </div>
+        </div>
+
+        <!-- ============================================ -->
+        <!-- SECTION 3: FIELD MAPPINGS (Query Mode Only) -->
+        <!-- ============================================ -->
+        <template if:true={isQueryMode}>
+            <div class="cpe-section">
+                <div class="section-header" onclick={toggleSection} data-section="fieldMappings">
+                    <lightning-icon icon-name="utility:routing_offline" size="small" class="section-icon"></lightning-icon>
+                    <span class="section-title">Field Mappings</span>
+                    <lightning-icon icon-name={fieldMappingsSectionIcon} size="x-small" class="chevron"></lightning-icon>
+                </div>
+                <div class={fieldMappingsSectionClass}>
+                    <div class="subsection">
+                        <div class="subsection-title">Display Fields</div>
+                        <div class="field-row">
+                            <lightning-input 
+                                type="text" 
+                                label="Title Field" 
+                                value={titleField}
+                                placeholder="Name"
+                                field-level-help="Field to display as marker title"
+                                onchange={handleTitleFieldChange}>
+                            </lightning-input>
+                            <lightning-input 
+                                type="text" 
+                                label="Description Field" 
+                                value={descriptionField}
+                                placeholder="Description"
+                                field-level-help="Field to display in marker popup"
+                                onchange={handleDescriptionFieldChange}>
+                            </lightning-input>
+                        </div>
+                        <lightning-input 
+                            type="text" 
+                            label="Custom Icon Field" 
+                            value={customIconField}
+                            placeholder="Icon_SVG__c"
+                            field-level-help="Field containing SVG or icon identifier per record"
+                            onchange={handleCustomIconFieldChange}>
+                        </lightning-input>
+                    </div>
+
+                    <div class="subsection">
+                        <div class="subsection-title">Location Fields</div>
+                        <div class="field-row">
+                            <lightning-input 
+                                type="text" 
+                                label="Latitude Field" 
+                                value={latitudeField}
+                                placeholder="BillingLatitude"
+                                field-level-help="Required for Leaflet maps"
+                                onchange={handleLatitudeFieldChange}>
+                            </lightning-input>
+                            <lightning-input 
+                                type="text" 
+                                label="Longitude Field" 
+                                value={longitudeField}
+                                placeholder="BillingLongitude"
+                                field-level-help="Required for Leaflet maps"
+                                onchange={handleLongitudeFieldChange}>
+                            </lightning-input>
+                        </div>
+                    </div>
+
+                    <div class="subsection">
+                        <div class="subsection-title">Address Fields</div>
+                        <lightning-input 
+                            type="text" 
+                            label="Address Field" 
+                            value={addressField}
+                            placeholder="BillingAddress"
+                            field-level-help="Compound address or full address text field"
+                            onchange={handleAddressFieldChange}>
+                        </lightning-input>
+                        <div class="field-row">
+                            <lightning-input 
+                                type="text" 
+                                label="Street" 
+                                value={streetField}
+                                placeholder="BillingStreet"
+                                onchange={handleStreetFieldChange}>
+                            </lightning-input>
+                            <lightning-input 
+                                type="text" 
+                                label="City" 
+                                value={cityField}
+                                placeholder="BillingCity"
+                                onchange={handleCityFieldChange}>
+                            </lightning-input>
+                        </div>
+                        <div class="field-row">
+                            <lightning-input 
+                                type="text" 
+                                label="State/Province" 
+                                value={stateField}
+                                placeholder="BillingState"
+                                onchange={handleStateFieldChange}>
+                            </lightning-input>
+                            <lightning-input 
+                                type="text" 
+                                label="Postal Code" 
+                                value={postalCodeField}
+                                placeholder="BillingPostalCode"
+                                onchange={handlePostalCodeFieldChange}>
+                            </lightning-input>
+                        </div>
+                        <lightning-input 
+                            type="text" 
+                            label="Country" 
+                            value={countryField}
+                            placeholder="BillingCountry"
+                            onchange={handleCountryFieldChange}>
+                        </lightning-input>
+                    </div>
+                </div>
+            </div>
+        </template>
+
+        <!-- ============================================ -->
+        <!-- SECTION 4: MAP CENTER -->
+        <!-- ============================================ -->
+        <div class="cpe-section">
+            <div class="section-header" onclick={toggleSection} data-section="mapCenter">
+                <lightning-icon icon-name="utility:target" size="small" class="section-icon"></lightning-icon>
+                <span class="section-title">Map Center</span>
+                <lightning-icon icon-name={mapCenterSectionIcon} size="x-small" class="chevron"></lightning-icon>
+            </div>
+            <div class={mapCenterSectionClass}>
+                <div class="center-type-toggle">
+                    <lightning-button-group>
+                        <lightning-button 
+                            label="Coordinates" 
+                            variant={coordinatesCenterVariant}
+                            onclick={handleCenterTypeChange} 
+                            data-value="coordinates">
+                        </lightning-button>
+                        <lightning-button 
+                            label="Address" 
+                            variant={addressCenterVariant}
+                            onclick={handleCenterTypeChange} 
+                            data-value="address">
+                        </lightning-button>
+                        <lightning-button 
+                            label="Auto" 
+                            variant={autoCenterVariant}
+                            onclick={handleCenterTypeChange} 
+                            data-value="auto">
+                        </lightning-button>
+                    </lightning-button-group>
+                </div>
+
+                <template if:true={isCoordinatesCenter}>
+                    <div class="field-row">
+                        <lightning-input 
+                            type="text" 
+                            label="Center Latitude" 
+                            value={centerLatitude}
+                            placeholder="37.7749"
+                            onchange={handleCenterLatitudeChange}>
+                        </lightning-input>
+                        <lightning-input 
+                            type="text" 
+                            label="Center Longitude" 
+                            value={centerLongitude}
+                            placeholder="-122.4194"
+                            onchange={handleCenterLongitudeChange}>
+                        </lightning-input>
+                    </div>
+                </template>
+
+                <template if:true={isAddressCenter}>
+                    <lightning-input 
+                        type="text" 
+                        label="Street" 
+                        value={centerStreet}
+                        onchange={handleCenterStreetChange}>
+                    </lightning-input>
+                    <div class="field-row">
+                        <lightning-input 
+                            type="text" 
+                            label="City" 
+                            value={centerCity}
+                            onchange={handleCenterCityChange}>
+                        </lightning-input>
+                        <lightning-input 
+                            type="text" 
+                            label="State/Province" 
+                            value={centerState}
+                            onchange={handleCenterStateChange}>
+                        </lightning-input>
+                    </div>
+                    <div class="field-row">
+                        <lightning-input 
+                            type="text" 
+                            label="Postal Code" 
+                            value={centerPostalCode}
+                            onchange={handleCenterPostalCodeChange}>
+                        </lightning-input>
+                        <lightning-input 
+                            type="text" 
+                            label="Country" 
+                            value={centerCountry}
+                            required
+                            onchange={handleCenterCountryChange}>
+                        </lightning-input>
+                    </div>
+                </template>
+
+                <template if:true={isAutoCenter}>
+                    <div class="info-box">
+                        <lightning-icon icon-name="utility:info" size="x-small"></lightning-icon>
+                        <span>Map will automatically center based on marker positions</span>
+                    </div>
+                </template>
+
+                <lightning-input 
+                    type="checkbox" 
+                    label="Display Center as Marker" 
+                    checked={displayCenterAsMarker}
+                    onchange={handleDisplayCenterAsMarkerChange}>
+                </lightning-input>
+
+                <lightning-slider 
+                    label="Zoom Level" 
+                    min="1" 
+                    max="22" 
+                    value={zoomLevel}
+                    onchange={handleZoomLevelChange}>
+                </lightning-slider>
+                <div class="zoom-labels">
+                    <span>World</span>
+                    <span>City</span>
+                    <span>Street</span>
+                    <span>Building</span>
+                </div>
+            </div>
+        </div>
+
+        <!-- ============================================ -->
+        <!-- SECTION 5: MARKER STYLE -->
+        <!-- ============================================ -->
+        <div class="cpe-section">
+            <div class="section-header" onclick={toggleSection} data-section="markerStyle">
+                <lightning-icon icon-name="utility:location" size="small" class="section-icon"></lightning-icon>
+                <span class="section-title">Marker Style</span>
+                <lightning-icon icon-name={markerStyleSectionIcon} size="x-small" class="chevron"></lightning-icon>
+            </div>
+            <div class={markerStyleSectionClass}>
+                <div class="marker-type-selector">
+                    <template for:each={markerTypes} for:item="type">
+                        <div key={type.value} 
+                             class={type.className} 
+                             onclick={handleMarkerTypeChange} 
+                             data-value={type.value}>
+                            <div class="marker-type-preview" innerHTML={type.preview}></div>
+                            <div class="marker-type-name">{type.label}</div>
+                        </div>
+                    </template>
+                </div>
+
+                <div class="color-row">
+                    <div class="color-input">
+                        <label>Fill Color</label>
+                        <div class="color-picker-wrapper">
+                            <input type="color" value={markerFillColor} onchange={handleMarkerFillColorChange}/>
+                            <lightning-input 
+                                type="text" 
+                                value={markerFillColor}
+                                onchange={handleMarkerFillColorChange}>
+                            </lightning-input>
+                        </div>
+                    </div>
+                    <div class="color-input">
+                        <label>Stroke Color</label>
+                        <div class="color-picker-wrapper">
+                            <input type="color" value={markerStrokeColor} onchange={handleMarkerStrokeColorChange}/>
+                            <lightning-input 
+                                type="text" 
+                                value={markerStrokeColor}
+                                onchange={handleMarkerStrokeColorChange}>
+                            </lightning-input>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="field-row">
+                    <lightning-slider 
+                        label="Fill Opacity" 
+                        min="0" 
+                        max="1" 
+                        step="0.1"
+                        value={markerFillOpacity}
+                        onchange={handleMarkerFillOpacityChange}>
+                    </lightning-slider>
+                    <lightning-input 
+                        type="number" 
+                        label="Stroke Width" 
+                        value={markerStrokeWidth}
+                        min="0"
+                        max="10"
+                        onchange={handleMarkerStrokeWidthChange}>
+                    </lightning-input>
+                </div>
+
+                <div class="field-row">
+                    <lightning-input 
+                        type="number" 
+                        label="Radius" 
+                        value={markerRadius}
+                        min="1"
+                        max="50"
+                        field-level-help="Size for circle markers"
+                        onchange={handleMarkerRadiusChange}>
+                    </lightning-input>
+                    <lightning-input 
+                        type="number" 
+                        label="Scale" 
+                        value={markerScale}
+                        min="0.1"
+                        max="3"
+                        step="0.1"
+                        field-level-help="Scale multiplier for marker size"
+                        onchange={handleMarkerScaleChange}>
+                    </lightning-input>
+                </div>
+
+                <template if:true={isCustomIconType}>
+                    <lightning-textarea 
+                        label="Custom Icon SVG" 
+                        value={customIconSvg}
+                        placeholder='<svg viewBox="0 0 24 24">...</svg>'
+                        field-level-help="SVG markup for custom marker icon"
+                        onchange={handleCustomIconSvgChange}>
+                    </lightning-textarea>
+                </template>
+            </div>
+        </div>
+
+        <!-- ============================================ -->
+        <!-- SECTION 6: MARKER CLUSTERING (Leaflet Only) -->
+        <!-- ============================================ -->
+        <template if:true={isLeafletMaps}>
+            <div class="cpe-section">
+                <div class="section-header" onclick={toggleSection} data-section="clustering">
+                    <lightning-icon icon-name="utility:groups" size="small" class="section-icon"></lightning-icon>
+                    <span class="section-title">Marker Clustering</span>
+                    <span class="leaflet-badge">Leaflet Only</span>
+                    <lightning-icon icon-name={clusteringSectionIcon} size="x-small" class="chevron"></lightning-icon>
+                </div>
+                <div class={clusteringSectionClass}>
+                    <lightning-input 
+                        type="toggle" 
+                        label="Enable Marker Clustering" 
+                        checked={enableClustering}
+                        message-toggle-active="Enabled"
+                        message-toggle-inactive="Disabled"
+                        onchange={handleEnableClusteringChange}>
+                    </lightning-input>
+
+                    <template if:true={enableClustering}>
+                        <div class="clustering-options">
+                            <lightning-input 
+                                type="checkbox" 
+                                label="Show Coverage on Hover" 
+                                checked={showCoverageOnHover}
+                                field-level-help="Display cluster boundary when hovering"
+                                onchange={handleShowCoverageOnHoverChange}>
+                            </lightning-input>
+
+                            <lightning-slider 
+                                label="Max Cluster Radius (pixels)" 
+                                min="10" 
+                                max="200" 
+                                value={maxClusterRadius}
+                                onchange={handleMaxClusterRadiusChange}>
+                            </lightning-slider>
+
+                            <lightning-input 
+                                type="number" 
+                                label="Disable Clustering at Zoom Level" 
+                                value={disableClusteringAtZoom}
+                                min="1"
+                                max="22"
+                                field-level-help="Show all individual markers at this zoom level"
+                                onchange={handleDisableClusteringAtZoomChange}>
+                            </lightning-input>
+                        </div>
+                    </template>
+                </div>
+            </div>
+        </template>
+
+        <!-- ============================================ -->
+        <!-- SECTION 7: DRAWING TOOLS (Leaflet Only) -->
+        <!-- ============================================ -->
+        <template if:true={isLeafletMaps}>
+            <div class="cpe-section">
+                <div class="section-header" onclick={toggleSection} data-section="drawing">
+                    <lightning-icon icon-name="utility:edit" size="small" class="section-icon"></lightning-icon>
+                    <span class="section-title">Drawing Tools</span>
+                    <span class="leaflet-badge">Leaflet Only</span>
+                    <lightning-icon icon-name={drawingSectionIcon} size="x-small" class="chevron"></lightning-icon>
+                </div>
+                <div class={drawingSectionClass}>
+                    <lightning-input 
+                        type="toggle" 
+                        label="Enable Drawing" 
+                        checked={enableDrawing}
+                        message-toggle-active="Enabled"
+                        message-toggle-inactive="Disabled"
+                        onchange={handleEnableDrawingChange}>
+                    </lightning-input>
+
+                    <template if:true={enableDrawing}>
+                        <div class="subsection">
+                            <div class="subsection-title">Available Tools</div>
+                            <div class="tool-grid">
+                                <lightning-input 
+                                    type="checkbox" 
+                                    label="Marker" 
+                                    checked={drawToolMarker}
+                                    onchange={handleDrawToolMarkerChange}>
+                                </lightning-input>
+                                <lightning-input 
+                                    type="checkbox" 
+                                    label="Line" 
+                                    checked={drawToolLine}
+                                    onchange={handleDrawToolLineChange}>
+                                </lightning-input>
+                                <lightning-input 
+                                    type="checkbox" 
+                                    label="Polygon" 
+                                    checked={drawToolPolygon}
+                                    onchange={handleDrawToolPolygonChange}>
+                                </lightning-input>
+                                <lightning-input 
+                                    type="checkbox" 
+                                    label="Circle" 
+                                    checked={drawToolCircle}
+                                    onchange={handleDrawToolCircleChange}>
+                                </lightning-input>
+                                <lightning-input 
+                                    type="checkbox" 
+                                    label="Edit" 
+                                    checked={drawToolEdit}
+                                    onchange={handleDrawToolEditChange}>
+                                </lightning-input>
+                                <lightning-input 
+                                    type="checkbox" 
+                                    label="Delete" 
+                                    checked={drawToolDelete}
+                                    onchange={handleDrawToolDeleteChange}>
+                                </lightning-input>
+                            </div>
+                        </div>
+
+                        <lightning-combobox 
+                            label="Toolbar Position" 
+                            value={drawToolbarPosition}
+                            options={toolbarPositionOptions}
+                            onchange={handleDrawToolbarPositionChange}>
+                        </lightning-combobox>
+
+                        <div class="subsection">
+                            <div class="subsection-title">Save Options</div>
+                            <lightning-input 
+                                type="checkbox" 
+                                label="Save as Content Document" 
+                                checked={saveAsContentDocument}
+                                field-level-help="Store drawings as a Salesforce File"
+                                onchange={handleSaveAsContentDocumentChange}>
+                            </lightning-input>
+                            
+                            <template if:true={saveAsContentDocument}>
+                                <lightning-input 
+                                    type="checkbox" 
+                                    label="Auto Save" 
+                                    checked={autoSaveContentDocument}
+                                    field-level-help="Automatically save changes"
+                                    onchange={handleAutoSaveContentDocumentChange}>
+                                </lightning-input>
+                                
+                                <lightning-input 
+                                    type="text" 
+                                    label="Linked Entity ID" 
+                                    value={contentDocumentLinkedEntityId}
+                                    placeholder="{!recordId}"
+                                    field-level-help="Record ID to link the Content Document to"
+                                    onchange={handleContentDocumentLinkedEntityIdChange}>
+                                </lightning-input>
+                                
+                                <lightning-input 
+                                    type="text" 
+                                    label="Existing Content Document ID" 
+                                    value={contentDocumentId}
+                                    field-level-help="ID of existing document to update"
+                                    onchange={handleContentDocumentIdChange}>
+                                </lightning-input>
+                                
+                                <lightning-input 
+                                    type="text" 
+                                    label="Document Title" 
+                                    value={contentDocumentTitle}
+                                    placeholder="Flow Map Drawing Document"
+                                    onchange={handleContentDocumentTitleChange}>
+                                </lightning-input>
+                            </template>
+                        </div>
+                    </template>
+                </div>
+            </div>
+        </template>
+
+        <!-- ============================================ -->
+        <!-- SECTION 8: GEOJSON (Leaflet Only) -->
+        <!-- ============================================ -->
+        <template if:true={isLeafletMaps}>
+            <div class="cpe-section">
+                <div class="section-header" onclick={toggleSection} data-section="geojson">
+                    <lightning-icon icon-name="utility:layers" size="small" class="section-icon"></lightning-icon>
+                    <span class="section-title">GeoJSON</span>
+                    <span class="leaflet-badge">Leaflet Only</span>
+                    <lightning-icon icon-name={geojsonSectionIcon} size="x-small" class="chevron"></lightning-icon>
+                </div>
+                <div class={geojsonSectionClass}>
+                    <lightning-textarea 
+                        label="GeoJSON Value (Read-Only Display)" 
+                        value={geoJsonValue}
+                        placeholder='{"type": "FeatureCollection", "features": [...]}'
+                        field-level-help="GeoJSON for static display. Can be JSON object, array, or Content Document ID"
+                        onchange={handleGeoJsonValueChange}>
+                    </lightning-textarea>
+                    
+                    <lightning-input 
+                        type="text" 
+                        label="Editable GeoJSON Content Document ID" 
+                        value={drawContentDocumentId}
+                        placeholder="069XXXXXXXXXXXX"
+                        field-level-help="Content Document ID with GeoJSON that users can edit"
+                        onchange={handleDrawContentDocumentIdChange}>
+                    </lightning-input>
+                </div>
+            </div>
+        </template>
+
+        <!-- ============================================ -->
+        <!-- SECTION 9: HEADER & UI -->
+        <!-- ============================================ -->
+        <div class="cpe-section">
+            <div class="section-header" onclick={toggleSection} data-section="headerUI">
+                <lightning-icon icon-name="utility:header" size="small" class="section-icon"></lightning-icon>
+                <span class="section-title">Header &amp; UI</span>
+                <lightning-icon icon-name={headerUISectionIcon} size="x-small" class="chevron"></lightning-icon>
+            </div>
+            <div class={headerUISectionClass}>
+                <lightning-input 
+                    type="text" 
+                    label="Title" 
+                    value={title}
+                    placeholder="Map Title"
+                    onchange={handleTitleChange}>
+                </lightning-input>
+                
+                <lightning-input 
+                    type="text" 
+                    label="Caption" 
+                    value={caption}
+                    placeholder="Optional subtitle"
+                    onchange={handleCaptionChange}>
+                </lightning-input>
+                
+                <lightning-input 
+                    type="text" 
+                    label="Icon Name" 
+                    value={iconName}
+                    placeholder="utility:location"
+                    field-level-help="SLDS icon name (e.g., utility:location, standard:account)"
+                    onchange={handleIconNameChange}>
+                </lightning-input>
+                
+                <lightning-input 
+                    type="checkbox" 
+                    label="Is Joined" 
+                    checked={isJoined}
+                    field-level-help="Flat bottom border for joining with other components"
+                    onchange={handleIsJoinedChange}>
+                </lightning-input>
+                
+                <lightning-textarea 
+                    label="Header Buttons JSON" 
+                    value={headerButtonsJson}
+                    placeholder='[{"name": "refresh", "label": "Refresh", "variant": "neutral", "iconName": "utility:refresh"}]'
+                    field-level-help="JSON array of button configurations"
+                    onchange={handleHeaderButtonsJsonChange}>
+                </lightning-textarea>
+            </div>
+        </div>
+
+        <!-- ============================================ -->
+        <!-- SECTION 10: LIST VIEW & SEARCH -->
+        <!-- ============================================ -->
+        <div class="cpe-section">
+            <div class="section-header" onclick={toggleSection} data-section="listSearch">
+                <lightning-icon icon-name="utility:search" size="small" class="section-icon"></lightning-icon>
+                <span class="section-title">List View &amp; Search</span>
+                <lightning-icon icon-name={listSearchSectionIcon} size="x-small" class="chevron"></lightning-icon>
+            </div>
+            <div class={listSearchSectionClass}>
+                <lightning-combobox 
+                    label="List View Visibility" 
+                    value={listViewVisibility}
+                    options={listViewOptions}
+                    field-level-help="Show location list: auto shows only when multiple markers"
+                    onchange={handleListViewVisibilityChange}>
+                </lightning-combobox>
+                
+                <div class="subsection">
+                    <div class="subsection-title">Search</div>
+                    <lightning-input 
+                        type="toggle" 
+                        label="Enable Search" 
+                        checked={isSearchable}
+                        message-toggle-active="Enabled"
+                        message-toggle-inactive="Disabled"
+                        onchange={handleIsSearchableChange}>
+                    </lightning-input>
+                    
+                    <template if:true={isSearchable}>
+                        <lightning-input 
+                            type="text" 
+                            label="Search Placeholder" 
+                            value={searchPlaceholder}
+                            placeholder="Search locations..."
+                            onchange={handleSearchPlaceholderChange}>
+                        </lightning-input>
+                        
+                        <lightning-combobox 
+                            label="Search Position" 
+                            value={searchPosition}
+                            options={searchPositionOptions}
+                            onchange={handleSearchPositionChange}>
+                        </lightning-combobox>
+                    </template>
+                </div>
+                
+                <div class="subsection">
+                    <div class="subsection-title">Filters</div>
+                    <lightning-input 
+                        type="toggle" 
+                        label="Show Filter Option" 
+                        checked={showFilterOption}
+                        message-toggle-active="Enabled"
+                        message-toggle-inactive="Disabled"
+                        onchange={handleShowFilterOptionChange}>
+                    </lightning-input>
+                    
+                    <template if:true={showFilterOption}>
+                        <lightning-textarea 
+                            label="Filter Fields JSON" 
+                            value={filterFieldsJson}
+                            placeholder='[{"fieldName": "Industry", "label": "Industry", "type": "picklist"}]'
+                            field-level-help="JSON array defining filter fields"
+                            onchange={handleFilterFieldsJsonChange}>
+                        </lightning-textarea>
+                    </template>
+                </div>
+                
+                <template if:true={isLeafletMaps}>
+                    <div class="subsection">
+                        <div class="subsection-title">Marker Interaction</div>
+                        <lightning-input 
+                            type="checkbox" 
+                            label="Enable Marker Drag" 
+                            checked={enableMarkerDrag}
+                            field-level-help="Allow users to drag markers to new positions"
+                            onchange={handleEnableMarkerDragChange}>
+                        </lightning-input>
+                    </div>
+                </template>
+            </div>
+        </div>
+    </div>
+</template>
