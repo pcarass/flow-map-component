@@ -295,33 +295,24 @@ export default class FlowMapCpe extends LightningElement {
     // MARKER TYPES CONFIGURATION
     // ============================================
     
-    get markerTypes() {
-        return [
-            {
-                value: 'default',
-                label: 'Default',
-                preview: '<svg viewBox="0 0 24 24" width="32" height="32"><path fill="#EA4335" d="M12 2C8.13 2 5 5.13 5 9c0 5.25 7 13 7 13s7-7.75 7-13c0-3.87-3.13-7-7-7z"/></svg>',
-                className: this.markerType === 'default' ? 'marker-type-option selected' : 'marker-type-option'
-            },
-            {
-                value: 'circle',
-                label: 'Circle',
-                preview: '<svg viewBox="0 0 24 24" width="32" height="32"><circle cx="12" cy="12" r="8" fill="#EA4335" stroke="#C62828" stroke-width="2"/></svg>',
-                className: this.markerType === 'circle' ? 'marker-type-option selected' : 'marker-type-option'
-            },
-            {
-                value: 'pin',
-                label: 'Pin',
-                preview: '<svg viewBox="0 0 24 24" width="32" height="32"><path fill="#EA4335" stroke="#C62828" stroke-width="1" d="M12 2C8.69 2 6 4.69 6 8c0 5.5 6 14 6 14s6-8.5 6-14c0-3.31-2.69-6-6-6zm0 9c-1.66 0-3-1.34-3-3s1.34-3 3-3 3 1.34 3 3-1.34 3-3 3z"/></svg>',
-                className: this.markerType === 'pin' ? 'marker-type-option selected' : 'marker-type-option'
-            },
-            {
-                value: 'customIcon',
-                label: 'Custom',
-                preview: '<svg viewBox="0 0 24 24" width="32" height="32"><rect x="4" y="4" width="16" height="16" fill="none" stroke="#EA4335" stroke-width="2" stroke-dasharray="4"/><text x="12" y="16" text-anchor="middle" font-size="10" fill="#EA4335">SVG</text></svg>',
-                className: this.markerType === 'customIcon' ? 'marker-type-option selected' : 'marker-type-option'
-            }
-        ];
+    // ============================================
+    // MARKER TYPE CLASS GETTERS
+    // ============================================
+    
+    get defaultMarkerClass() {
+        return this.markerType === 'default' ? 'marker-type-option selected' : 'marker-type-option';
+    }
+    
+    get circleMarkerClass() {
+        return this.markerType === 'circle' ? 'marker-type-option selected' : 'marker-type-option';
+    }
+    
+    get pinMarkerClass() {
+        return this.markerType === 'pin' ? 'marker-type-option selected' : 'marker-type-option';
+    }
+    
+    get customMarkerClass() {
+        return this.markerType === 'customIcon' ? 'marker-type-option selected' : 'marker-type-option';
     }
 
     // ============================================
