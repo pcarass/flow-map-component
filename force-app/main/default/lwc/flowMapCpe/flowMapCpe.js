@@ -128,16 +128,80 @@ export default class FlowMapCpe extends LightningElement {
     initializeValues() {
         if (!this._inputVariables || this._inputVariables.length === 0) return;
         
+        // Create a map for easy lookup
+        const valueMap = {};
         this._inputVariables.forEach(variable => {
-            const name = variable.name;
-            const value = variable.value;
-            
-            if (value !== undefined && value !== null) {
-                if (this.hasOwnProperty(name)) {
-                    this[name] = value;
-                }
+            if (variable.value !== undefined && variable.value !== null) {
+                valueMap[variable.name] = variable.value;
             }
         });
+        
+        // Explicitly set each property
+        if (valueMap.mapType) this.mapType = valueMap.mapType;
+        if (valueMap.height) this.height = valueMap.height;
+        if (valueMap.sourceType) this.sourceType = valueMap.sourceType;
+        if (valueMap.objectApiName) this.objectApiName = valueMap.objectApiName;
+        if (valueMap.queryFilter) this.queryFilter = valueMap.queryFilter;
+        if (valueMap.recordLimit !== undefined) this.recordLimit = parseInt(valueMap.recordLimit, 10) || 100;
+        if (valueMap.markersJson) this.markersJson = valueMap.markersJson;
+        if (valueMap.titleField) this.titleField = valueMap.titleField;
+        if (valueMap.descriptionField) this.descriptionField = valueMap.descriptionField;
+        if (valueMap.addressField) this.addressField = valueMap.addressField;
+        if (valueMap.latitudeField) this.latitudeField = valueMap.latitudeField;
+        if (valueMap.longitudeField) this.longitudeField = valueMap.longitudeField;
+        if (valueMap.cityField) this.cityField = valueMap.cityField;
+        if (valueMap.stateField) this.stateField = valueMap.stateField;
+        if (valueMap.postalCodeField) this.postalCodeField = valueMap.postalCodeField;
+        if (valueMap.countryField) this.countryField = valueMap.countryField;
+        if (valueMap.customIconField) this.customIconField = valueMap.customIconField;
+        if (valueMap.centerLatitude) this.centerLatitude = valueMap.centerLatitude;
+        if (valueMap.centerLongitude) this.centerLongitude = valueMap.centerLongitude;
+        if (valueMap.centerStreet) this.centerStreet = valueMap.centerStreet;
+        if (valueMap.centerCity) this.centerCity = valueMap.centerCity;
+        if (valueMap.centerState) this.centerState = valueMap.centerState;
+        if (valueMap.centerPostalCode) this.centerPostalCode = valueMap.centerPostalCode;
+        if (valueMap.centerCountry) this.centerCountry = valueMap.centerCountry;
+        if (valueMap.displayCenterAsMarker !== undefined) this.displayCenterAsMarker = valueMap.displayCenterAsMarker === true || valueMap.displayCenterAsMarker === 'true';
+        if (valueMap.zoomLevel !== undefined) this.zoomLevel = parseInt(valueMap.zoomLevel, 10) || 10;
+        if (valueMap.markerType) this.markerType = valueMap.markerType;
+        if (valueMap.markerFillColor) this.markerFillColor = valueMap.markerFillColor;
+        if (valueMap.markerFillOpacity !== undefined) this.markerFillOpacity = parseFloat(valueMap.markerFillOpacity) || 0.7;
+        if (valueMap.markerStrokeColor) this.markerStrokeColor = valueMap.markerStrokeColor;
+        if (valueMap.markerStrokeWidth !== undefined) this.markerStrokeWidth = parseInt(valueMap.markerStrokeWidth, 10) || 2;
+        if (valueMap.markerRadius !== undefined) this.markerRadius = parseInt(valueMap.markerRadius, 10) || 10;
+        if (valueMap.markerScale !== undefined) this.markerScale = parseFloat(valueMap.markerScale) || 1;
+        if (valueMap.customIconSvg) this.customIconSvg = valueMap.customIconSvg;
+        if (valueMap.enableClustering !== undefined) this.enableClustering = valueMap.enableClustering === true || valueMap.enableClustering === 'true';
+        if (valueMap.showCoverageOnHover !== undefined) this.showCoverageOnHover = valueMap.showCoverageOnHover === true || valueMap.showCoverageOnHover === 'true';
+        if (valueMap.maxClusterRadius !== undefined) this.maxClusterRadius = parseInt(valueMap.maxClusterRadius, 10) || 80;
+        if (valueMap.disableClusteringAtZoom !== undefined) this.disableClusteringAtZoom = parseInt(valueMap.disableClusteringAtZoom, 10);
+        if (valueMap.enableDrawing !== undefined) this.enableDrawing = valueMap.enableDrawing === true || valueMap.enableDrawing === 'true';
+        if (valueMap.drawToolMarker !== undefined) this.drawToolMarker = valueMap.drawToolMarker === true || valueMap.drawToolMarker === 'true';
+        if (valueMap.drawToolLine !== undefined) this.drawToolLine = valueMap.drawToolLine === true || valueMap.drawToolLine === 'true';
+        if (valueMap.drawToolPolygon !== undefined) this.drawToolPolygon = valueMap.drawToolPolygon === true || valueMap.drawToolPolygon === 'true';
+        if (valueMap.drawToolCircle !== undefined) this.drawToolCircle = valueMap.drawToolCircle === true || valueMap.drawToolCircle === 'true';
+        if (valueMap.drawToolEdit !== undefined) this.drawToolEdit = valueMap.drawToolEdit === true || valueMap.drawToolEdit === 'true';
+        if (valueMap.drawToolDelete !== undefined) this.drawToolDelete = valueMap.drawToolDelete === true || valueMap.drawToolDelete === 'true';
+        if (valueMap.drawToolbarPosition) this.drawToolbarPosition = valueMap.drawToolbarPosition;
+        if (valueMap.saveAsContentDocument !== undefined) this.saveAsContentDocument = valueMap.saveAsContentDocument === true || valueMap.saveAsContentDocument === 'true';
+        if (valueMap.autoSaveContentDocument !== undefined) this.autoSaveContentDocument = valueMap.autoSaveContentDocument === true || valueMap.autoSaveContentDocument === 'true';
+        if (valueMap.contentDocumentLinkedEntityId) this.contentDocumentLinkedEntityId = valueMap.contentDocumentLinkedEntityId;
+        if (valueMap.contentDocumentId) this.contentDocumentId = valueMap.contentDocumentId;
+        if (valueMap.contentDocumentTitle) this.contentDocumentTitle = valueMap.contentDocumentTitle;
+        if (valueMap.geoJsonValue) this.geoJsonValue = valueMap.geoJsonValue;
+        if (valueMap.drawContentDocumentId) this.drawContentDocumentId = valueMap.drawContentDocumentId;
+        if (valueMap.title) this.title = valueMap.title;
+        if (valueMap.caption) this.caption = valueMap.caption;
+        if (valueMap.iconName) this.iconName = valueMap.iconName;
+        if (valueMap.isJoined !== undefined) this.isJoined = valueMap.isJoined === true || valueMap.isJoined === 'true';
+        if (valueMap.headerButtonsJson) this.headerButtonsJson = valueMap.headerButtonsJson;
+        if (valueMap.listViewVisibility) this.listViewVisibility = valueMap.listViewVisibility;
+        if (valueMap.isSearchable !== undefined) this.isSearchable = valueMap.isSearchable === true || valueMap.isSearchable === 'true';
+        if (valueMap.searchPlaceholder) this.searchPlaceholder = valueMap.searchPlaceholder;
+        if (valueMap.searchPosition) this.searchPosition = valueMap.searchPosition;
+        if (valueMap.showFilterOption !== undefined) this.showFilterOption = valueMap.showFilterOption === true || valueMap.showFilterOption === 'true';
+        if (valueMap.filterFieldsJson) this.filterFieldsJson = valueMap.filterFieldsJson;
+        if (valueMap.enableMarkerDrag !== undefined) this.enableMarkerDrag = valueMap.enableMarkerDrag === true || valueMap.enableMarkerDrag === 'true';
         
         // Determine center type based on values
         if (this.centerLatitude || this.centerLongitude) {
