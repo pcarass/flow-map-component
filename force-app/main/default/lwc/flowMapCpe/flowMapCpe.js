@@ -67,6 +67,7 @@ export default class FlowMapCpe extends LightningElement {
     @track stateField = '';
     @track postalCodeField = '';
     @track countryField = '';
+    @track streetField = '';
     @track customIconField = '';
     @track centerLatitude = '';
     @track centerLongitude = '';
@@ -138,7 +139,7 @@ export default class FlowMapCpe extends LightningElement {
         const stringProps = [
             'mapType', 'height', 'sourceType', 'objectApiName', 'queryFilter', 'markersJson',
             'titleField', 'descriptionField', 'addressField', 'latitudeField', 'longitudeField',
-            'cityField', 'stateField', 'postalCodeField', 'countryField', 'customIconField',
+            'cityField', 'stateField', 'postalCodeField', 'countryField', 'streetField', 'customIconField',
             'centerLatitude', 'centerLongitude', 'centerStreet', 'centerCity', 'centerState',
             'centerPostalCode', 'centerCountry', 'markerType', 'markerFillColor', 'markerStrokeColor',
             'customIconSvg', 'drawToolbarPosition', 'contentDocumentLinkedEntityId', 'contentDocumentId',
@@ -541,6 +542,16 @@ export default class FlowMapCpe extends LightningElement {
         this.dispatchValueChange('countryField', this.countryField, 'String');
     }
 
+    
+    handleStreetFieldChange(event) {
+        this.streetField = event.target.value;
+        this.dispatchValueChange('streetField', this.streetField, 'String');
+    }
+    
+    handleContentDocumentIdChange(event) {
+        this.contentDocumentId = event.target.value;
+        this.dispatchValueChange('contentDocumentId', this.contentDocumentId, 'String');
+    }
     // ============================================
     // MAP CENTER HANDLERS
     // ============================================
