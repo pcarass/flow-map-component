@@ -4,6 +4,16 @@
  */
 public with sharing class FlowMapActions {
     
+    // Pi constant for degree to radian conversion
+    private static final Double PI = 3.14159265358979323846;
+    
+    /**
+     * @description Converts degrees to radians (Math.toRadians doesn't exist in Apex)
+     */
+    private static Double toRadians(Double degrees) {
+        return degrees * PI / 180.0;
+    }
+    
     /**
      * @description Request wrapper for geocoding
      */
@@ -159,10 +169,10 @@ public with sharing class FlowMapActions {
                 Double earthRadiusKm = 6371.0;
                 Double radius = unit == 'kilometers' ? earthRadiusKm : earthRadiusMiles;
                 
-                Double lat1Rad = Math.toRadians((Double) req.originLatitude);
-                Double lat2Rad = Math.toRadians((Double) req.destinationLatitude);
-                Double deltaLatRad = Math.toRadians((Double) (req.destinationLatitude - req.originLatitude));
-                Double deltaLonRad = Math.toRadians((Double) (req.destinationLongitude - req.originLongitude));
+                Double lat1Rad = toRadians((Double) req.originLatitude);
+                Double lat2Rad = toRadians((Double) req.destinationLatitude);
+                Double deltaLatRad = toRadians((Double) (req.destinationLatitude - req.originLatitude));
+                Double deltaLonRad = toRadians((Double) (req.destinationLongitude - req.originLongitude));
                 
                 Double a = Math.sin(deltaLatRad / 2) * Math.sin(deltaLatRad / 2) +
                            Math.cos(lat1Rad) * Math.cos(lat2Rad) *
@@ -258,10 +268,10 @@ public with sharing class FlowMapActions {
     ) {
         Double earthRadiusMiles = 3958.8;
         
-        Double lat1Rad = Math.toRadians((Double) lat1);
-        Double lat2Rad = Math.toRadians((Double) lat2);
-        Double deltaLatRad = Math.toRadians((Double) (lat2 - lat1));
-        Double deltaLonRad = Math.toRadians((Double) (lon2 - lon1));
+        Double lat1Rad = toRadians((Double) lat1);
+        Double lat2Rad = toRadians((Double) lat2);
+        Double deltaLatRad = toRadians((Double) (lat2 - lat1));
+        Double deltaLonRad = toRadians((Double) (lon2 - lon1));
         
         Double a = Math.sin(deltaLatRad / 2) * Math.sin(deltaLatRad / 2) +
                    Math.cos(lat1Rad) * Math.cos(lat2Rad) *
