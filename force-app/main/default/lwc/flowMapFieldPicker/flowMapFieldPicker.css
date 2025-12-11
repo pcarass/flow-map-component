@@ -1,0 +1,104 @@
+/* Container */
+.slds-form-element {
+    margin-bottom: 12px;
+}
+
+/* Dropdown positioning */
+.slds-dropdown {
+    max-height: 300px;
+    overflow-y: auto;
+    z-index: 9999;
+}
+
+/* Field option styling */
+.slds-listbox__option {
+    cursor: pointer;
+    padding: 8px 12px;
+}
+
+.slds-listbox__option:hover {
+    background-color: #f3f3f3;
+}
+
+/* Field label and API name */
+.field-label {
+    display: block;
+    font-size: 13px;
+    color: #181818;
+    font-weight: 500;
+}
+
+.field-api-name {
+    display: block;
+    font-size: 11px;
+    color: #706e6b;
+}
+
+/* Field type icon in input */
+.field-type-icon {
+    position: absolute;
+    left: 10px;
+    top: 50%;
+    transform: translateY(-50%);
+}
+
+/* When field is selected, add left padding for icon */
+.slds-input {
+    padding-left: 12px;
+}
+
+/* Clear button */
+.clear-button {
+    position: absolute;
+    right: 30px;
+    top: 50%;
+    transform: translateY(-50%);
+    z-index: 1;
+}
+
+/* Dropdown icon */
+.dropdown-icon {
+    pointer-events: none;
+}
+
+/* Custom badge */
+.custom-badge {
+    background: #706e6b;
+    color: white;
+    font-size: 9px;
+    padding: 2px 6px;
+    border-radius: 3px;
+    margin-left: 8px;
+    text-transform: uppercase;
+    font-weight: 600;
+}
+
+/* Loading and empty states */
+.loading-item,
+.empty-item {
+    padding: 16px;
+    text-align: center;
+    color: #706e6b;
+    font-size: 13px;
+}
+
+.loading-item {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 10px;
+}
+
+/* Listbox item */
+.slds-listbox__item {
+    border-bottom: 1px solid #f0f0f0;
+}
+
+.slds-listbox__item:last-child {
+    border-bottom: none;
+}
+
+/* Icon styling */
+.slds-listbox__option-icon {
+    margin-right: 8px;
+}
