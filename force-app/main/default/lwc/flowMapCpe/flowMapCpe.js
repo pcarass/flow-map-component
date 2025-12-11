@@ -43,8 +43,7 @@ export default class FlowMapCpe extends LightningElement {
         drawing: false,
         geojson: false,
         headerUI: false,
-        listSearch: false,
-        popupCustomization: false
+        listSearch: false
     };
     
     @track centerType = 'auto';
@@ -136,11 +135,7 @@ export default class FlowMapCpe extends LightningElement {
     @track enableMarkerDrag = false;
     @track listPosition = 'left';
     @track listCollapsible = false;
-    @track popupTitleField = '';
-    @track popupDescriptionField = '';
-    @track popupAddressField = '';
-    @track popupCustomFieldsJson = '';
-    @track popupShowNavigateButton = false;
+    // Popup properties removed for stability
 
     // ============================================
     // WIRE: GET OBJECTS
@@ -183,8 +178,7 @@ export default class FlowMapCpe extends LightningElement {
             'customIconSvg', 'drawToolbarPosition', 'contentDocumentLinkedEntityId', 'contentDocumentId',
             'contentDocumentTitle', 'geoJsonValue', 'drawContentDocumentId', 'title', 'caption',
             'iconName', 'headerButtonsJson', 'listViewVisibility', 'searchPlaceholder', 'searchPosition',
-            'filterFieldsJson', 'disableClusteringAtZoom', 'listPosition', 'popupTitleField', 
-            'popupDescriptionField', 'popupAddressField', 'popupCustomFieldsJson'
+            'filterFieldsJson', 'disableClusteringAtZoom', 'listPosition'
         ];
         
         stringProps.forEach(prop => {
@@ -209,7 +203,7 @@ export default class FlowMapCpe extends LightningElement {
             'displayCenterAsMarker', 'enableClustering', 'showCoverageOnHover', 'enableDrawing',
             'drawToolMarker', 'drawToolLine', 'drawToolPolygon', 'drawToolCircle', 'drawToolEdit',
             'drawToolDelete', 'saveAsContentDocument', 'autoSaveContentDocument', 'isJoined',
-            'isSearchable', 'showFilterOption', 'enableMarkerDrag', 'listCollapsible', 'popupShowNavigateButton'
+            'isSearchable', 'showFilterOption', 'enableMarkerDrag', 'listCollapsible'
         ];
         
         boolProps.forEach(prop => {
@@ -403,12 +397,7 @@ export default class FlowMapCpe extends LightningElement {
         return this.expandedSections.listSearch ? 'section-content expanded' : 'section-content collapsed';
     }
     
-    get popupCustomizationSectionIcon() {
-        return this.expandedSections.popupCustomization ? 'utility:chevrondown' : 'utility:chevronright';
-    }
-    get popupCustomizationSectionClass() {
-        return this.expandedSections.popupCustomization ? 'section-content expanded' : 'section-content collapsed';
-    }
+
 
     // ============================================
     // CONDITION GETTERS
@@ -887,35 +876,7 @@ export default class FlowMapCpe extends LightningElement {
         this.dispatchValueChange('listCollapsible', this.listCollapsible, 'Boolean');
     }
     
-    handlePopupTitleFieldChange(event) {
-        const value = event.detail ? event.detail.value : '';
-        this.popupTitleField = value || '';
-        this.dispatchValueChange('popupTitleField', this.popupTitleField, 'String');
-    }
-    
-    handlePopupDescriptionFieldChange(event) {
-        const value = event.detail ? event.detail.value : '';
-        this.popupDescriptionField = value || '';
-        this.dispatchValueChange('popupDescriptionField', this.popupDescriptionField, 'String');
-    }
-    
-    handlePopupAddressFieldChange(event) {
-        const value = event.detail ? event.detail.value : '';
-        this.popupAddressField = value || '';
-        this.dispatchValueChange('popupAddressField', this.popupAddressField, 'String');
-    }
-    
-    handlePopupCustomFieldsJsonChange(event) {
-        const value = event.target ? event.target.value : '';
-        this.popupCustomFieldsJson = value || '';
-        this.dispatchValueChange('popupCustomFieldsJson', this.popupCustomFieldsJson, 'String');
-    }
-    
-    handlePopupShowNavigateButtonChange(event) {
-        const value = event.target ? event.target.checked : false;
-        this.popupShowNavigateButton = value === true;
-        this.dispatchValueChange('popupShowNavigateButton', this.popupShowNavigateButton, 'Boolean');
-    }
+    // Popup handlers removed for stability
 
     // ============================================
     // VALIDATION
