@@ -1,42 +1,46 @@
 <template>
-    <div class="slds-p-around_medium">
-        <h2 class="slds-text-heading_small slds-m-bottom_medium">Flow Map Configuration</h2>
+    <div class="slds-p-around_small">
+        <div class="slds-text-heading_small slds-m-bottom_small">Flow Map Configuration</div>
         
-        <!-- Map Type -->
-        <div class="slds-m-bottom_medium">
+        <!-- Map Type Selection -->
+        <div class="slds-form-element slds-m-bottom_small">
             <label class="slds-form-element__label">Map Type</label>
-            <div class="slds-button-group">
-                <button class={googleMapClass} onclick={selectGoogleMaps}>Google Maps</button>
-                <button class={leafletMapClass} onclick={selectLeafletMaps}>Leaflet</button>
+            <div class="slds-form-element__control">
+                <lightning-button-group>
+                    <lightning-button 
+                        label="Google Maps" 
+                        variant={googleButtonVariant}
+                        onclick={handleGoogleClick}>
+                    </lightning-button>
+                    <lightning-button 
+                        label="Leaflet" 
+                        variant={leafletButtonVariant}
+                        onclick={handleLeafletClick}>
+                    </lightning-button>
+                </lightning-button-group>
             </div>
         </div>
-        
-        <!-- Height -->
-        <lightning-input 
-            label="Map Height" 
-            value={height} 
-            onchange={handleHeightChange}
-            class="slds-m-bottom_medium">
-        </lightning-input>
-        
-        <!-- Object Selection -->
-        <lightning-combobox
-            label="Object"
-            value={objectApiName}
-            options={objectOptions}
-            onchange={handleObjectChange}
-            placeholder="Select an object..."
-            class="slds-m-bottom_medium">
-        </lightning-combobox>
-        
+
+        <!-- Map Height -->
+        <div class="slds-form-element slds-m-bottom_small">
+            <lightning-input 
+                type="text"
+                label="Map Height" 
+                value={height}
+                placeholder="400px"
+                onchange={handleHeightChange}>
+            </lightning-input>
+        </div>
+
         <!-- Zoom Level -->
-        <lightning-slider 
-            label="Zoom Level" 
-            value={zoomLevel} 
-            min="1" 
-            max="22"
-            onchange={handleZoomLevelChange}
-            class="slds-m-bottom_medium">
-        </lightning-slider>
+        <div class="slds-form-element slds-m-bottom_small">
+            <lightning-slider 
+                label="Zoom Level"
+                min="1"
+                max="22"
+                value={zoomLevel}
+                onchange={handleZoomChange}>
+            </lightning-slider>
+        </div>
     </div>
 </template>
