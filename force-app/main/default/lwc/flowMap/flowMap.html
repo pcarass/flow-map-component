@@ -103,14 +103,44 @@
     
     <!-- Main Content -->
     <div class={mainContainerClasses}>
-        <!-- List View (Left Panel) -->
+        
+        <!-- Collapse Toggle Button (when list is collapsed) -->
+        <template lwc:if={showCollapseToggle}>
+            <template lwc:if={isListCollapsed}>
+                <button 
+                    class={collapseButtonClasses}
+                    onclick={handleCollapseToggle}
+                    title={collapseToggleTitle}>
+                    <lightning-icon icon-name={collapseToggleIcon} size="x-small"></lightning-icon>
+                </button>
+            </template>
+        </template>
+        
+        <!-- List View Panel -->
         <template lwc:if={showListView}>
-            <div class="list-view-container">
+            <div class={listContainerClasses}>
+                <!-- Collapse Toggle in Header -->
+                <template lwc:if={showCollapseToggle}>
+                    <div class="list-header">
+                        <span class="list-header-title">Locations ({markerCount})</span>
+                        <lightning-button-icon
+                            icon-name={collapseToggleIcon}
+                            alternative-text={collapseToggleTitle}
+                            title={collapseToggleTitle}
+                            onclick={handleCollapseToggle}
+                            variant="bare"
+                            size="small">
+                        </lightning-button-icon>
+                    </div>
+                </template>
+                
                 <template lwc:if={isLoading}>
-                    <lightning-spinner alternative-text="Loading" size="small"></lightning-spinner>
+                    <div class="slds-align_absolute-center slds-p-around_medium">
+                        <lightning-spinner alternative-text="Loading" size="small"></lightning-spinner>
+                    </div>
                 </template>
                 <template lwc:else>
-                    <ul class="slds-has-dividers_bottom-space">
+                    <ul class="marker-list slds-has-dividers_bottom-space">
                         <template for:each={filteredMarkers} for:item="marker" for:index="index">
                             <li key={marker.id} 
                                 class={marker.listItemClass}
@@ -218,7 +248,7 @@
                         icon-name="utility:edit"
                         alternative-text="Edit"
                         title="Edit Shapes"
-                        onclick={handleEditMode}
+                        onclick={handleDrawEdit}
                         class={editToolClass}>
                     </lightning-button-icon>
                 </template>
@@ -227,19 +257,23 @@
                         icon-name="utility:delete"
                         alternative-text="Delete"
                         title="Delete Shapes"
-                        onclick={handleDeleteMode}
+                        onclick={handleDrawDelete}
                         class={deleteToolClass}>
                     </lightning-button-icon>
                 </template>
             </lightning-button-group>
-        </div>
-    </template>
-    
-    <!-- Error Display -->
-    <template lwc:if={errorMessage}>
-        <div class="slds-notify slds-notify_alert slds-alert_error slds-m-top_small" role="alert">
-            <lightning-icon icon-name="utility:error" size="x-small" class="slds-m-right_x-small"></lightning-icon>
-            <span>{errorMessage}</span>
+            
+            <template lwc:if={saveAsContentDocument}>
+                <div class="save-controls slds-m-left_small">
+                    <lightning-button
+                        label="Save"
+                        icon-name="utility:save"
+                        onclick={handleSaveDrawing}
+                        variant="brand"
+                        size="small">
+                    </lightning-button>
+                </div>
+            </template>
         </div>
     </template>
 </template>
