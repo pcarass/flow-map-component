@@ -1,4 +1,6 @@
-import { LightningElement, api, track } from 'lwc';
+import { LightningElement, api, track, wire } from 'lwc';
+import getQueryableObjects from '@salesforce/apex/FlowMapSchemaService.getQueryableObjects';
+import getPreviewData from '@salesforce/apex/FlowMapSchemaService.getPreviewData';
 
 export default class FlowMapCpe extends LightningElement {
     // ============================================
@@ -24,7 +26,6 @@ export default class FlowMapCpe extends LightningElement {
         this.initializeValues();
     }
     
-    // Generic type descriptors (required by Flow Builder)
     @api genericTypeMappings;
     
     // ============================================
@@ -34,7 +35,7 @@ export default class FlowMapCpe extends LightningElement {
     @track expandedSections = {
         mapType: true,
         dataSource: true,
-        fieldMappings: false,
+        fieldMappings: true,
         mapCenter: false,
         markerStyle: false,
         clustering: false,
@@ -44,8 +45,22 @@ export default class FlowMapCpe extends LightningElement {
         listSearch: false
     };
     
-    // Center type selection
     @track centerType = 'auto';
+    
+    // ============================================
+    // OBJECT/FIELD DATA
+    // ============================================
+    
+    @track objectOptions = [];
+    @track isLoadingObjects = true;
+    
+    // ============================================
+    // PREVIEW STATE
+    // ============================================
+    
+    @track previewMarkers = [];
+    @track isLoadingPreview = false;
+    @track previewError = null;
     
     // ============================================
     // ALL PROPERTY VALUES
@@ -119,21 +134,35 @@ export default class FlowMapCpe extends LightningElement {
     @track enableMarkerDrag = false;
 
     // ============================================
+    // WIRE: GET OBJECTS
+    // ============================================
+    
+    @wire(getQueryableObjects)
+    wiredObjects({ error, data }) {
+        this.isLoadingObjects = false;
+        if (data) {
+            this.objectOptions = data.map(obj => ({
+                label: obj.label + (obj.isCustom ? ' (Custom)' : ''),
+                value: obj.value
+            }));
+        } else if (error) {
+            console.error('Error loading objects:', error);
+        }
+    }
+
+    // ============================================
     // INITIALIZATION
     // ============================================
     
     initializeValues() {
         if (!this._inputVariables || this._inputVariables.length === 0) return;
         
-        // Create a map for easy lookup
         const valueMap = {};
         this._inputVariables.forEach(variable => {
             if (variable.value !== undefined && variable.value !== null) {
                 valueMap[variable.name] = variable.value;
             }
         });
-        
-        console.log('CPE initializing with values:', JSON.stringify(valueMap));
         
         // String properties
         const stringProps = [
@@ -179,7 +208,7 @@ export default class FlowMapCpe extends LightningElement {
             }
         });
         
-        // Determine center type based on values
+        // Determine center type
         if (this.centerLatitude || this.centerLongitude) {
             this.centerType = 'coordinates';
         } else if (this.centerCity || this.centerCountry || this.centerStreet) {
@@ -188,19 +217,100 @@ export default class FlowMapCpe extends LightningElement {
             this.centerType = 'auto';
         }
         
-        console.log('CPE initialized. mapType =', this.mapType);
+        // Load preview if we have enough data
+        if (this.objectApiName) {
+            this.loadPreview();
+        }
+    }
+
+    // ============================================
+    // PREVIEW METHODS
+    // ============================================
+    
+    get previewContainerStyle() {
+        return 'height: 200px;';
     }
     
+    get hasPreviewMarkers() {
+        return this.previewMarkers && this.previewMarkers.length > 0;
+    }
+    
+    get previewMarkerCount() {
+        return this.previewMarkers ? this.previewMarkers.length : 0;
+    }
+    
+    refreshPreview() {
+        this.loadPreview();
+    }
+    
+    async loadPreview() {
+        if (!this.objectApiName || this.sourceType !== 'query') {
+            this.previewMarkers = [];
+            return;
+        }
+        
+        this.isLoadingPreview = true;
+        this.previewError = null;
+        
+        try {
+            const fieldMappings = {
+                titleField: this.titleField,
+                descriptionField: this.descriptionField,
+                streetField: this.streetField,
+                cityField: this.cityField,
+                stateField: this.stateField,
+                postalCodeField: this.postalCodeField,
+                countryField: this.countryField,
+                latitudeField: this.latitudeField,
+                longitudeField: this.longitudeField
+            };
+            
+            const data = await getPreviewData({
+                objectApiName: this.objectApiName,
+                fieldMappingsJson: JSON.stringify(fieldMappings),
+                filterClause: this.queryFilter,
+                recordLimit: 5
+            });
+            
+            if (data && data.length > 0) {
+                this.previewMarkers = data.map(record => ({
+                    location: {
+                        Street: record.street || '',
+                        City: record.city || '',
+                        State: record.state || '',
+                        PostalCode: record.postalCode || '',
+                        Country: record.country || ''
+                    },
+                    title: record.title || 'Marker',
+                    description: record.description || ''
+                })).filter(m => m.location.City || m.location.Country);
+                
+                if (this.previewMarkers.length === 0) {
+                    this.previewError = 'No records with address data found';
+                }
+            } else {
+                this.previewMarkers = [];
+                this.previewError = 'No records found';
+            }
+        } catch (error) {
+            console.error('Preview error:', error);
+            this.previewError = 'Error loading preview';
+            this.previewMarkers = [];
+        } finally {
+            this.isLoadingPreview = false;
+        }
+    }
+
     // ============================================
     // FLOW VARIABLE OPTIONS
     // ============================================
     
     get flowVariableOptions() {
-        const options = [{ label: '-- Enter manually --', value: '' }];
+        const options = [{ label: '-- Enter value --', value: '' }];
         
         if (this._builderContext && this._builderContext.variables) {
             this._builderContext.variables.forEach(variable => {
-                if (variable.dataType === 'String' || variable.dataType === 'Number' || variable.dataType === 'SObject') {
+                if (variable.dataType === 'String' || variable.dataType === 'SObject') {
                     options.push({
                         label: '{!' + variable.name + '}',
                         value: '{!' + variable.name + '}'
@@ -212,12 +322,12 @@ export default class FlowMapCpe extends LightningElement {
         return options;
     }
     
-    get hasFlowVariables() {
-        return this._builderContext && this._builderContext.variables && this._builderContext.variables.length > 0;
+    get showManualJsonInput() {
+        return this.sourceType === 'manual';
     }
 
     // ============================================
-    // COMPUTED PROPERTIES - SECTIONS
+    // SECTION ICON GETTERS
     // ============================================
     
     get mapTypeSectionIcon() {
@@ -269,13 +379,6 @@ export default class FlowMapCpe extends LightningElement {
         return this.expandedSections.drawing ? 'section-content expanded' : 'section-content collapsed';
     }
     
-    get geojsonSectionIcon() {
-        return this.expandedSections.geojson ? 'utility:chevrondown' : 'utility:chevronright';
-    }
-    get geojsonSectionClass() {
-        return this.expandedSections.geojson ? 'section-content expanded' : 'section-content collapsed';
-    }
-    
     get headerUISectionIcon() {
         return this.expandedSections.headerUI ? 'utility:chevrondown' : 'utility:chevronright';
     }
@@ -291,7 +394,7 @@ export default class FlowMapCpe extends LightningElement {
     }
 
     // ============================================
-    // COMPUTED PROPERTIES - CONDITIONS
+    // CONDITION GETTERS
     // ============================================
     
     get isLeafletMaps() {
@@ -314,20 +417,6 @@ export default class FlowMapCpe extends LightningElement {
         return this.sourceType === 'variable' || this.sourceType === 'manual';
     }
     
-    get queryButtonClass() {
-        return this.sourceType === 'query' ? 'source-button selected' : 'source-button';
-    }
-    
-    get variableButtonClass() {
-        return this.sourceType === 'variable' ? 'source-button selected' : 'source-button';
-    }
-    
-    get manualButtonClass() {
-        return this.sourceType === 'manual' ? 'source-button selected' : 'source-button';
-    }
-    
-    
-    // Button variant getters for lightning-button
     get queryButtonVariant() {
         return this.sourceType === 'query' ? 'brand' : 'neutral';
     }
@@ -340,7 +429,6 @@ export default class FlowMapCpe extends LightningElement {
         return this.sourceType === 'manual' ? 'brand' : 'neutral';
     }
     
-    // Center type button variants
     get coordinatesCenterVariant() {
         return this.centerType === 'coordinates' ? 'brand' : 'neutral';
     }
@@ -352,6 +440,7 @@ export default class FlowMapCpe extends LightningElement {
     get autoCenterVariant() {
         return this.centerType === 'auto' ? 'brand' : 'neutral';
     }
+    
     get isCoordinatesCenter() {
         return this.centerType === 'coordinates';
     }
@@ -360,20 +449,8 @@ export default class FlowMapCpe extends LightningElement {
         return this.centerType === 'address';
     }
     
-    
     get isAutoCenter() {
         return this.centerType === 'auto';
-    }
-    get coordinatesCenterClass() {
-        return this.centerType === 'coordinates' ? 'source-button selected' : 'source-button';
-    }
-    
-    get addressCenterClass() {
-        return this.centerType === 'address' ? 'source-button selected' : 'source-button';
-    }
-    
-    get autoCenterClass() {
-        return this.centerType === 'auto' ? 'source-button selected' : 'source-button';
     }
     
     get isCustomMarkerType() {
@@ -388,10 +465,7 @@ export default class FlowMapCpe extends LightningElement {
         return 'Buildings';
     }
     
-    // ============================================
-    // MARKER TYPE CLASS GETTERS
-    // ============================================
-    
+    // Marker type class getters
     get defaultMarkerClass() {
         return this.markerType === 'default' ? 'marker-type-option selected' : 'marker-type-option';
     }
@@ -423,7 +497,7 @@ export default class FlowMapCpe extends LightningElement {
     
     get listViewOptions() {
         return [
-            { label: 'Auto (show when multiple markers)', value: 'auto' },
+            { label: 'Auto', value: 'auto' },
             { label: 'Always Visible', value: 'visible' },
             { label: 'Always Hidden', value: 'hidden' }
         ];
@@ -439,7 +513,7 @@ export default class FlowMapCpe extends LightningElement {
     }
 
     // ============================================
-    // SECTION TOGGLE HANDLER
+    // SECTION TOGGLE
     // ============================================
     
     toggleSection(event) {
@@ -451,11 +525,10 @@ export default class FlowMapCpe extends LightningElement {
     }
 
     // ============================================
-    // DISPATCH VALUE CHANGE TO FLOW
+    // DISPATCH VALUE CHANGE
     // ============================================
     
     dispatchValueChange(name, value, dataType = 'String') {
-        console.log('Dispatching value change:', name, '=', value, '(', dataType, ')');
         const valueChangeEvent = new CustomEvent('configuration_editor_input_value_changed', {
             bubbles: true,
             cancelable: false,
@@ -498,9 +571,23 @@ export default class FlowMapCpe extends LightningElement {
         this.dispatchValueChange('sourceType', value, 'String');
     }
     
-    handleObjectApiNameChange(event) {
-        this.objectApiName = event.target.value;
+    handleObjectChange(event) {
+        this.objectApiName = event.detail.value;
         this.dispatchValueChange('objectApiName', this.objectApiName, 'String');
+        
+        // Clear field mappings when object changes
+        this.titleField = '';
+        this.descriptionField = '';
+        this.streetField = '';
+        this.cityField = '';
+        this.stateField = '';
+        this.postalCodeField = '';
+        this.countryField = '';
+        this.latitudeField = '';
+        this.longitudeField = '';
+        
+        // Load preview with new object
+        this.loadPreview();
     }
     
     handleQueryFilterChange(event) {
@@ -514,7 +601,7 @@ export default class FlowMapCpe extends LightningElement {
     }
     
     handleMarkersJsonChange(event) {
-        this.markersJson = event.target.value;
+        this.markersJson = event.detail ? event.detail.value : event.target.value;
         this.dispatchValueChange('markersJson', this.markersJson, 'String');
     }
 
@@ -523,65 +610,60 @@ export default class FlowMapCpe extends LightningElement {
     // ============================================
     
     handleTitleFieldChange(event) {
-        this.titleField = event.target.value;
+        this.titleField = event.detail.value;
         this.dispatchValueChange('titleField', this.titleField, 'String');
+        this.loadPreview();
     }
     
     handleDescriptionFieldChange(event) {
-        this.descriptionField = event.target.value;
+        this.descriptionField = event.detail.value;
         this.dispatchValueChange('descriptionField', this.descriptionField, 'String');
     }
     
     handleCustomIconFieldChange(event) {
-        this.customIconField = event.target.value;
+        this.customIconField = event.detail.value;
         this.dispatchValueChange('customIconField', this.customIconField, 'String');
     }
     
-    handleLatitudeFieldChange(event) {
-        this.latitudeField = event.target.value;
-        this.dispatchValueChange('latitudeField', this.latitudeField, 'String');
-    }
-    
-    handleLongitudeFieldChange(event) {
-        this.longitudeField = event.target.value;
-        this.dispatchValueChange('longitudeField', this.longitudeField, 'String');
-    }
-    
-    handleAddressFieldChange(event) {
-        this.addressField = event.target.value;
-        this.dispatchValueChange('addressField', this.addressField, 'String');
+    handleStreetFieldChange(event) {
+        this.streetField = event.detail.value;
+        this.dispatchValueChange('streetField', this.streetField, 'String');
+        this.loadPreview();
     }
     
     handleCityFieldChange(event) {
-        this.cityField = event.target.value;
+        this.cityField = event.detail.value;
         this.dispatchValueChange('cityField', this.cityField, 'String');
+        this.loadPreview();
     }
     
     handleStateFieldChange(event) {
-        this.stateField = event.target.value;
+        this.stateField = event.detail.value;
         this.dispatchValueChange('stateField', this.stateField, 'String');
+        this.loadPreview();
     }
     
     handlePostalCodeFieldChange(event) {
-        this.postalCodeField = event.target.value;
+        this.postalCodeField = event.detail.value;
         this.dispatchValueChange('postalCodeField', this.postalCodeField, 'String');
     }
     
     handleCountryFieldChange(event) {
-        this.countryField = event.target.value;
+        this.countryField = event.detail.value;
         this.dispatchValueChange('countryField', this.countryField, 'String');
+        this.loadPreview();
+    }
+    
+    handleLatitudeFieldChange(event) {
+        this.latitudeField = event.detail.value;
+        this.dispatchValueChange('latitudeField', this.latitudeField, 'String');
+    }
+    
+    handleLongitudeFieldChange(event) {
+        this.longitudeField = event.detail.value;
+        this.dispatchValueChange('longitudeField', this.longitudeField, 'String');
     }
 
-    
-    handleStreetFieldChange(event) {
-        this.streetField = event.target.value;
-        this.dispatchValueChange('streetField', this.streetField, 'String');
-    }
-    
-    handleContentDocumentIdChange(event) {
-        this.contentDocumentId = event.target.value;
-        this.dispatchValueChange('contentDocumentId', this.contentDocumentId, 'String');
-    }
     // ============================================
     // MAP CENTER HANDLERS
     // ============================================
@@ -625,11 +707,6 @@ export default class FlowMapCpe extends LightningElement {
         this.dispatchValueChange('centerCountry', this.centerCountry, 'String');
     }
     
-    handleDisplayCenterAsMarkerChange(event) {
-        this.displayCenterAsMarker = event.target.checked;
-        this.dispatchValueChange('displayCenterAsMarker', this.displayCenterAsMarker, 'Boolean');
-    }
-    
     handleZoomLevelChange(event) {
         this.zoomLevel = parseInt(event.target.value, 10);
         this.dispatchValueChange('zoomLevel', this.zoomLevel, 'Integer');
@@ -655,26 +732,6 @@ export default class FlowMapCpe extends LightningElement {
         this.dispatchValueChange('markerStrokeColor', this.markerStrokeColor, 'String');
     }
     
-    handleMarkerFillOpacityChange(event) {
-        this.markerFillOpacity = parseFloat(event.target.value);
-        this.dispatchValueChange('markerFillOpacity', String(this.markerFillOpacity), 'String');
-    }
-    
-    handleMarkerStrokeWidthChange(event) {
-        this.markerStrokeWidth = parseInt(event.target.value, 10);
-        this.dispatchValueChange('markerStrokeWidth', this.markerStrokeWidth, 'Integer');
-    }
-    
-    handleMarkerRadiusChange(event) {
-        this.markerRadius = parseInt(event.target.value, 10);
-        this.dispatchValueChange('markerRadius', this.markerRadius, 'Integer');
-    }
-    
-    handleMarkerScaleChange(event) {
-        this.markerScale = parseFloat(event.target.value);
-        this.dispatchValueChange('markerScale', String(this.markerScale), 'String');
-    }
-    
     handleCustomIconSvgChange(event) {
         this.customIconSvg = event.target.value;
         this.dispatchValueChange('customIconSvg', this.customIconSvg, 'String');
@@ -697,11 +754,6 @@ export default class FlowMapCpe extends LightningElement {
     handleMaxClusterRadiusChange(event) {
         this.maxClusterRadius = parseInt(event.target.value, 10);
         this.dispatchValueChange('maxClusterRadius', this.maxClusterRadius, 'Integer');
-    }
-    
-    handleDisableClusteringAtZoomChange(event) {
-        this.disableClusteringAtZoom = event.target.value;
-        this.dispatchValueChange('disableClusteringAtZoom', this.disableClusteringAtZoom ? parseInt(this.disableClusteringAtZoom, 10) : null, 'Integer');
     }
 
     // ============================================
@@ -747,40 +799,6 @@ export default class FlowMapCpe extends LightningElement {
         this.drawToolbarPosition = event.detail.value;
         this.dispatchValueChange('drawToolbarPosition', this.drawToolbarPosition, 'String');
     }
-    
-    handleSaveAsContentDocumentChange(event) {
-        this.saveAsContentDocument = event.target.checked;
-        this.dispatchValueChange('saveAsContentDocument', this.saveAsContentDocument, 'Boolean');
-    }
-    
-    handleAutoSaveContentDocumentChange(event) {
-        this.autoSaveContentDocument = event.target.checked;
-        this.dispatchValueChange('autoSaveContentDocument', this.autoSaveContentDocument, 'Boolean');
-    }
-    
-    handleContentDocumentLinkedEntityIdChange(event) {
-        this.contentDocumentLinkedEntityId = event.target.value;
-        this.dispatchValueChange('contentDocumentLinkedEntityId', this.contentDocumentLinkedEntityId, 'String');
-    }
-    
-    handleContentDocumentTitleChange(event) {
-        this.contentDocumentTitle = event.target.value;
-        this.dispatchValueChange('contentDocumentTitle', this.contentDocumentTitle, 'String');
-    }
-
-    // ============================================
-    // GEOJSON HANDLERS
-    // ============================================
-    
-    handleGeoJsonValueChange(event) {
-        this.geoJsonValue = event.target.value;
-        this.dispatchValueChange('geoJsonValue', this.geoJsonValue, 'String');
-    }
-    
-    handleDrawContentDocumentIdChange(event) {
-        this.drawContentDocumentId = event.target.value;
-        this.dispatchValueChange('drawContentDocumentId', this.drawContentDocumentId, 'String');
-    }
 
     // ============================================
     // HEADER UI HANDLERS
@@ -805,14 +823,9 @@ export default class FlowMapCpe extends LightningElement {
         this.isJoined = event.target.checked;
         this.dispatchValueChange('isJoined', this.isJoined, 'Boolean');
     }
-    
-    handleHeaderButtonsJsonChange(event) {
-        this.headerButtonsJson = event.target.value;
-        this.dispatchValueChange('headerButtonsJson', this.headerButtonsJson, 'String');
-    }
 
     // ============================================
-    // LIST VIEW & SEARCH HANDLERS
+    // LIST & SEARCH HANDLERS
     // ============================================
     
     handleListViewVisibilityChange(event) {
@@ -835,16 +848,6 @@ export default class FlowMapCpe extends LightningElement {
         this.dispatchValueChange('searchPosition', this.searchPosition, 'String');
     }
     
-    handleShowFilterOptionChange(event) {
-        this.showFilterOption = event.target.checked;
-        this.dispatchValueChange('showFilterOption', this.showFilterOption, 'Boolean');
-    }
-    
-    handleFilterFieldsJsonChange(event) {
-        this.filterFieldsJson = event.target.value;
-        this.dispatchValueChange('filterFieldsJson', this.filterFieldsJson, 'String');
-    }
-    
     handleEnableMarkerDragChange(event) {
         this.enableMarkerDrag = event.target.checked;
         this.dispatchValueChange('enableMarkerDrag', this.enableMarkerDrag, 'Boolean');
@@ -861,7 +864,7 @@ export default class FlowMapCpe extends LightningElement {
         if (this.sourceType === 'query' && !this.objectApiName) {
             validity.push({
                 key: 'objectApiName',
-                errorString: 'Object API Name is required when using Query data source'
+                errorString: 'Object is required for Query data source'
             });
         }
         
