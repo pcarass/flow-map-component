@@ -7,6 +7,7 @@ export default class FlowMapCpe extends LightningElement {
     // FLOW BUILDER CONTEXT
     // ============================================
     
+    _initTimeout = null;
     _builderContext;
     @api 
     get builderContext() {
@@ -23,7 +24,13 @@ export default class FlowMapCpe extends LightningElement {
     }
     set inputVariables(value) {
         this._inputVariables = value || [];
-        this.initializeValues();
+        // Debounce initialization to prevent multiple calls during Flow render
+        if (this._initTimeout) {
+            clearTimeout(this._initTimeout);
+        }
+        this._initTimeout = setTimeout(() => {
+            this.initializeValues();
+        }, 0);
     }
     
     @api genericTypeMappings;
@@ -31,9 +38,6 @@ export default class FlowMapCpe extends LightningElement {
     // ============================================
     // SECTION COLLAPSE STATE
     // ============================================
-    
-    _hasInitialized = false;
-    _previousInputValues = {};
     
     @track expandedSections = {
         mapType: true,
