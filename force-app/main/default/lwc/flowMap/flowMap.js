@@ -98,7 +98,17 @@ export default class FlowMap extends LightningElement {
     @api drawContentDocumentId; // Editable GeoJSON from Content Document
     
     // List View Configuration
-    @api listViewVisibility = 'auto'; // 'visible', 'hidden', 'auto'
+        @api listViewVisibility = 'auto'; // 'visible', 'hidden', 'auto'
+    @api listPosition = 'left'; // 'left' or 'right'
+    @api listCollapsible = false;
+    
+    // Popup customization
+    @api popupTitleField;
+    @api popupDescriptionField;
+    @api popupAddressField;
+    @api popupCustomFieldsJson; // JSON: [{"label": "Phone", "field": "Phone"}]
+    @api popupShowNavigateButton = false;
+
     
     // Search Configuration
     @api isSearchable = false;
@@ -139,6 +149,8 @@ export default class FlowMap extends LightningElement {
     @track isFilterOpen = false;
     @track filterValues = {};
     @track selectedMarkerIndex = -1;
+    @track isListCollapsed = false;
+    @track dynamicMapCenter = null; // For programmatic centering
     @track drawingMode = null; // 'marker', 'line', 'polygon', 'circle', 'edit', 'delete'
     
     // Internal State
@@ -197,10 +209,48 @@ export default class FlowMap extends LightningElement {
     
     get mainContainerClasses() {
         let classes = 'map-main-container slds-grid';
-        if (this.showListView) {
+        if (this.showListView && !this.isListCollapsed) {
             classes += ' with-list-view';
         }
+        if (this.listPosition === 'right') {
+            classes += ' list-right';
+        }
         return classes;
+    }
+    
+    get listContainerClasses() {
+        let classes = 'list-view-container';
+        if (this.isListCollapsed) {
+            classes += ' collapsed';
+        }
+        return classes;
+    }
+    
+    get showCollapseToggle() {
+        return this.listCollapsible && this.showListView;
+    }
+    
+    get collapseToggleIcon() {
+        if (this.listPosition === 'right') {
+            return this.isListCollapsed ? 'utility:chevronleft' : 'utility:chevronright';
+        }
+        return this.isListCollapsed ? 'utility:chevronright' : 'utility:chevronleft';
+    }
+    
+    get collapseToggleTitle() {
+        return this.isListCollapsed ? 'Expand list' : 'Collapse list';
+    }
+    
+    get collapseButtonClasses() {
+        let classes = 'collapse-toggle-button';
+        if (this.listPosition === 'right') {
+            classes += ' position-right';
+        }
+        return classes;
+    }
+    
+    get markerCount() {
+        return this.filteredMarkers ? this.filteredMarkers.length : 0;
     }
     
     get showListView() {
@@ -281,6 +331,10 @@ export default class FlowMap extends LightningElement {
     }
     
     get mapCenter() {
+        // Use dynamic center if set (for navigating to selected marker)
+        if (this.dynamicMapCenter) {
+            return this.dynamicMapCenter;
+        }
         if (this.centerLatitude && this.centerLongitude) {
             return {
                 Latitude: parseFloat(this.centerLatitude),
@@ -803,6 +857,11 @@ export default class FlowMap extends LightningElement {
         this.searchTerm = event.target.value;
         this.filterMarkers();
     }
+
+    handleCollapseToggle() {
+        this.isListCollapsed = !this.isListCollapsed;
+    }
+    
     
     filterMarkers() {
         let filtered = [...this.markers];
@@ -900,8 +959,28 @@ export default class FlowMap extends LightningElement {
             // Update list styling immediately
             this.applyMarkerListClasses();
             
+            // Center map on selected marker
+            if (this.useLeafletMaps && this.leafletMap && marker.latitude && marker.longitude) {
+                // Leaflet: use setView
+                this.leafletMap.setView([marker.latitude, marker.longitude], this.zoomLevel);
+            } else if (this.useGoogleMaps) {
+                // Google Maps: update center to pan to marker
+                // Build address-based center if no coordinates
+                if (marker.latitude && marker.longitude) {
+                    this.dynamicMapCenter = {
+                        Latitude: parseFloat(marker.latitude),
+                        Longitude: parseFloat(marker.longitude)
+                    };
+                } else if (marker.city || marker.country) {
+                    this.dynamicMapCenter = {
+                        City: marker.city || '',
+                        State: marker.state || '',
+                        Country: marker.country || ''
+                    };
+                }
+            }
+            
             // Batch dispatch Flow attribute changes to prevent multiple re-renders
-            // Using Promise.resolve() to batch into single microtask
             Promise.resolve().then(() => {
                 this.dispatchFlowAttributeChange('selectedMarkerId', marker.id);
                 this.dispatchFlowAttributeChange('selectedMarkerTitle', marker.title);
@@ -909,11 +988,6 @@ export default class FlowMap extends LightningElement {
                 this.dispatchFlowAttributeChange('selectedMarkerLongitude', marker.longitude);
                 this.dispatchFlowAttributeChange('selectedMarkerData', JSON.stringify(marker.rawData));
             });
-            
-            // Center map on selected marker (Leaflet only - Google Maps handles this automatically)
-            if (this.useLeafletMaps && this.leafletMap && marker.latitude && marker.longitude) {
-                this.leafletMap.setView([marker.latitude, marker.longitude], this.zoomLevel);
-            }
             
             // Dispatch custom event for interactions
             this.dispatchEvent(new CustomEvent('markerselect', {
