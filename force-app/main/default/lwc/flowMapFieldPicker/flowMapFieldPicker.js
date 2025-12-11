@@ -1,5 +1,4 @@
 import { LightningElement, api, track, wire } from 'lwc';
-import getObjectFields from '@salesforce/apex/FlowMapSchemaService.getObjectFields';
 import getFieldsByCategory from '@salesforce/apex/FlowMapSchemaService.getFieldsByCategory';
 
 export default class FlowMapFieldPicker extends LightningElement {
@@ -58,6 +57,14 @@ export default class FlowMapFieldPicker extends LightningElement {
     
     get hasFields() {
         return this.filteredFields && this.filteredFields.length > 0;
+    }
+    
+    get noObjectSelected() {
+        return !this.objectApiName;
+    }
+    
+    get noFieldsFound() {
+        return !this.hasFields;
     }
     
     get displayValue() {
