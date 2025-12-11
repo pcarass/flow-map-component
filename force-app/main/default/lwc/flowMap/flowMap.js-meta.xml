@@ -172,14 +172,6 @@
             <property name="listViewVisibility" type="String" label="List View" default="auto" 
                       datasource="visible,hidden,auto"
                       description="Show location list: visible (always), hidden (never), auto (when multiple markers)"/>
-            <property name="listPosition" type="String" label="List Position" default="left"
-                      datasource="left,right"
-                      description="Position of the list panel: left or right side of map"/>
-            <property name="listCollapsible" type="Boolean" label="List Collapsible" default="false" 
-                      description="Allow users to collapse and expand the list panel"/>
-            
-            <!-- ============================================ -->
-            <!-- Popup properties removed for stability -->
             
             <!-- ============================================ -->
             <!-- SEARCH CONFIGURATION -->
