@@ -6,7 +6,8 @@ import getPreviewData from '@salesforce/apex/FlowMapSchemaService.getPreviewData
 // This is necessary because Flow Builder frequently re-renders the CPE
 const STATE_CACHE = {
     values: {},
-    initialized: false
+    initialized: false,
+    lastInputSignature: null
 };
 
 export default class FlowMapCpe extends LightningElement {
@@ -30,23 +31,49 @@ export default class FlowMapCpe extends LightningElement {
     }
     set inputVariables(value) {
         this._inputVariables = value || [];
-        // Use module-level cache to determine if we should initialize
-        // This persists even if Flow Builder destroys and recreates the component
-        if (!STATE_CACHE.initialized) {
-            STATE_CACHE.initialized = true;
-            this.initializeFromInputVariables();
-        }
-        // Always restore from cache (handles component recreation)
+        this.syncCacheFromInputVariables();
         this.restoreFromCache();
     }
     
     initializeFromInputVariables() {
-        // Parse inputVariables into the cache
-        this._inputVariables.forEach(variable => {
-            if (variable.value !== undefined && variable.value !== null) {
-                STATE_CACHE.values[variable.name] = variable.value;
-            }
-        });
+        // Legacy method retained for compatibility; now delegated to syncCacheFromInputVariables
+        this.syncCacheFromInputVariables();
+    }
+
+    buildInputSignature() {
+        if (!this._inputVariables || this._inputVariables.length === 0) {
+            return null;
+        }
+
+        const sorted = [...this._inputVariables]
+            .filter(variable => variable && variable.name)
+            .sort((a, b) => (a.name || '').localeCompare(b.name || ''))
+            .map(variable => ({ name: variable.name, value: variable.value }));
+
+        return JSON.stringify(sorted);
+    }
+
+    syncCacheFromInputVariables() {
+        const signature = this.buildInputSignature();
+
+        // Only refresh the cache if the incoming variables differ from what we last saw.
+        // This avoids overwriting in-progress edits while still updating when a new Flow
+        // session loads different saved values.
+        if (STATE_CACHE.initialized && signature && signature === STATE_CACHE.lastInputSignature) {
+            return;
+        }
+
+        STATE_CACHE.values = {};
+        if (this._inputVariables) {
+            this._inputVariables.forEach(variable => {
+                if (variable && variable.name && variable.value !== undefined && variable.value !== null) {
+                    STATE_CACHE.values[variable.name] = variable.value;
+                }
+            });
+        }
+
+        STATE_CACHE.initialized = true;
+        STATE_CACHE.lastInputSignature = signature;
     }
     
     restoreFromCache() {
@@ -732,9 +759,33 @@ export default class FlowMapCpe extends LightningElement {
     // ============================================
     // MAP CENTER HANDLERS
     // ============================================
-    
+
     handleCenterTypeChange(event) {
-        this.centerType = event.currentTarget.dataset.value;
+        const newType = event.currentTarget.dataset.value;
+        this.centerType = newType;
+
+        if (newType === 'auto') {
+            // Clear all center values so the map can auto-center
+            this.updateValue('centerLatitude', '', 'String');
+            this.updateValue('centerLongitude', '', 'String');
+            this.updateValue('centerStreet', '', 'String');
+            this.updateValue('centerCity', '', 'String');
+            this.updateValue('centerState', '', 'String');
+            this.updateValue('centerPostalCode', '', 'String');
+            this.updateValue('centerCountry', '', 'String');
+            this.updateValue('displayCenterAsMarker', false, 'Boolean');
+        } else if (newType === 'coordinates') {
+            // Clear address fields when switching to coordinates
+            this.updateValue('centerStreet', '', 'String');
+            this.updateValue('centerCity', '', 'String');
+            this.updateValue('centerState', '', 'String');
+            this.updateValue('centerPostalCode', '', 'String');
+            this.updateValue('centerCountry', '', 'String');
+        } else if (newType === 'address') {
+            // Clear coordinate fields when switching to address
+            this.updateValue('centerLatitude', '', 'String');
+            this.updateValue('centerLongitude', '', 'String');
+        }
     }
     
     handleCenterLatitudeChange(event) {
