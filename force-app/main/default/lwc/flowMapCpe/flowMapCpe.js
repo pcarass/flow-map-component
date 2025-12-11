@@ -326,14 +326,44 @@ export default class FlowMapCpe extends LightningElement {
         return this.sourceType === 'manual' ? 'source-button selected' : 'source-button';
     }
     
-    get isCenterCoordinates() {
+    
+    // Button variant getters for lightning-button
+    get queryButtonVariant() {
+        return this.sourceType === 'query' ? 'brand' : 'neutral';
+    }
+    
+    get variableButtonVariant() {
+        return this.sourceType === 'variable' ? 'brand' : 'neutral';
+    }
+    
+    get manualButtonVariant() {
+        return this.sourceType === 'manual' ? 'brand' : 'neutral';
+    }
+    
+    // Center type button variants
+    get coordinatesCenterVariant() {
+        return this.centerType === 'coordinates' ? 'brand' : 'neutral';
+    }
+    
+    get addressCenterVariant() {
+        return this.centerType === 'address' ? 'brand' : 'neutral';
+    }
+    
+    get autoCenterVariant() {
+        return this.centerType === 'auto' ? 'brand' : 'neutral';
+    }
+    get isCoordinatesCenter() {
         return this.centerType === 'coordinates';
     }
     
-    get isCenterAddress() {
+    get isAddressCenter() {
         return this.centerType === 'address';
     }
     
+    
+    get isAutoCenter() {
+        return this.centerType === 'auto';
+    }
     get coordinatesCenterClass() {
         return this.centerType === 'coordinates' ? 'source-button selected' : 'source-button';
     }
