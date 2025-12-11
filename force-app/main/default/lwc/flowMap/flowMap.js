@@ -149,8 +149,14 @@ export default class FlowMap extends LightningElement {
     @track isFilterOpen = false;
     @track filterValues = {};
     @track selectedMarkerIndex = -1;
+    _flowUpdateTimeout = null;
+    _selectedMarkerId = null;
+    _selectedMarkerTitle = null;
+    _selectedMarkerLatitude = null;
+    _selectedMarkerLongitude = null;
+    _selectedMarkerData = null;
     @track isListCollapsed = false;
-    @track dynamicMapCenter = null; // For programmatic centering
+    // @track dynamicMapCenter removed - using selected-marker-value for navigation
     @track drawingMode = null; // 'marker', 'line', 'polygon', 'circle', 'edit', 'delete'
     
     // Internal State
@@ -306,21 +312,39 @@ export default class FlowMap extends LightningElement {
     }
     
     get googleMapMarkers() {
-        return this.filteredMarkers.map(m => ({
-            location: {
-                Latitude: m.latitude,
-                Longitude: m.longitude,
-                Street: m.street,
-                City: m.city,
-                State: m.state,
-                PostalCode: m.postalCode,
-                Country: m.country
-            },
-            title: m.title,
-            description: m.description,
-            value: m.id,
-            icon: this.getMarkerIcon(m)
-        }));
+        return this.filteredMarkers.map(m => {
+            // Use popup fields if configured, otherwise fall back to regular fields
+            let popupTitle = m.title;
+            let popupDesc = m.description;
+            
+            // If popup fields are set and the raw data contains them, use those
+            if (this.popupTitleField && m.rawData && m.rawData[this.popupTitleField]) {
+                popupTitle = m.rawData[this.popupTitleField];
+            }
+            if (this.popupDescriptionField && m.rawData && m.rawData[this.popupDescriptionField]) {
+                popupDesc = m.rawData[this.popupDescriptionField];
+            }
+            // Add address to description if popupAddressField is set
+            if (this.popupAddressField && m.rawData && m.rawData[this.popupAddressField]) {
+                popupDesc = (popupDesc ? popupDesc + '\n' : '') + m.rawData[this.popupAddressField];
+            }
+            
+            return {
+                location: {
+                    Latitude: m.latitude,
+                    Longitude: m.longitude,
+                    Street: m.street,
+                    City: m.city,
+                    State: m.state,
+                    PostalCode: m.postalCode,
+                    Country: m.country
+                },
+                title: popupTitle || m.title,
+                description: popupDesc || m.description,
+                value: m.id,
+                icon: this.getMarkerIcon(m)
+            };
+        });
     }
     
     get selectedMarkerValue() {
@@ -331,10 +355,6 @@ export default class FlowMap extends LightningElement {
     }
     
     get mapCenter() {
-        // Use dynamic center if set (for navigating to selected marker)
-        if (this.dynamicMapCenter) {
-            return this.dynamicMapCenter;
-        }
         if (this.centerLatitude && this.centerLongitude) {
             return {
                 Latitude: parseFloat(this.centerLatitude),
@@ -489,7 +509,11 @@ export default class FlowMap extends LightningElement {
             streetField: this.streetField,
             countryField: this.countryField,
             recordIdField: this.recordIdField,
-            customIconField: this.customIconField
+            customIconField: this.customIconField,
+            // Popup customization fields
+            popupTitleField: this.popupTitleField,
+            popupDescriptionField: this.popupDescriptionField,
+            popupAddressField: this.popupAddressField
         };
         
         const result = await getMapData({
@@ -940,7 +964,7 @@ export default class FlowMap extends LightningElement {
     }
     
     selectMarker(index, markerId) {
-        // Prevent re-selection of same marker (avoids unnecessary re-renders)
+        // Prevent re-selection of same marker (avoids unnecessary work)
         if (this.selectedMarkerIndex === index) {
             return;
         }
@@ -949,50 +973,36 @@ export default class FlowMap extends LightningElement {
         const marker = this.filteredMarkers[index];
         
         if (marker) {
-            // Update output attributes locally first
-            this.selectedMarkerId = marker.id;
-            this.selectedMarkerTitle = marker.title;
-            this.selectedMarkerLatitude = marker.latitude;
-            this.selectedMarkerLongitude = marker.longitude;
-            this.selectedMarkerData = JSON.stringify(marker.rawData);
+            // Update local state for immediate UI feedback
+            this._selectedMarkerId = marker.id;
+            this._selectedMarkerTitle = marker.title;
+            this._selectedMarkerLatitude = marker.latitude;
+            this._selectedMarkerLongitude = marker.longitude;
+            this._selectedMarkerData = JSON.stringify(marker.rawData);
             
             // Update list styling immediately
             this.applyMarkerListClasses();
             
-            // Center map on selected marker
+            // For Leaflet, manually pan to marker
             if (this.useLeafletMaps && this.leafletMap && marker.latitude && marker.longitude) {
-                // Leaflet: use setView
                 this.leafletMap.setView([marker.latitude, marker.longitude], this.zoomLevel);
-            } else if (this.useGoogleMaps) {
-                // Google Maps: update center to pan to marker
-                // Build address-based center if no coordinates
-                if (marker.latitude && marker.longitude) {
-                    this.dynamicMapCenter = {
-                        Latitude: parseFloat(marker.latitude),
-                        Longitude: parseFloat(marker.longitude)
-                    };
-                } else if (marker.city || marker.country) {
-                    this.dynamicMapCenter = {
-                        City: marker.city || '',
-                        State: marker.state || '',
-                        Country: marker.country || ''
-                    };
-                }
             }
             
-            // Batch dispatch Flow attribute changes to prevent multiple re-renders
-            Promise.resolve().then(() => {
-                this.dispatchFlowAttributeChange('selectedMarkerId', marker.id);
-                this.dispatchFlowAttributeChange('selectedMarkerTitle', marker.title);
-                this.dispatchFlowAttributeChange('selectedMarkerLatitude', marker.latitude);
-                this.dispatchFlowAttributeChange('selectedMarkerLongitude', marker.longitude);
-                this.dispatchFlowAttributeChange('selectedMarkerData', JSON.stringify(marker.rawData));
-            });
-            
-            // Dispatch custom event for interactions
+            // Dispatch custom event for parent components
             this.dispatchEvent(new CustomEvent('markerselect', {
                 detail: { marker: marker }
             }));
+            
+            // Debounce Flow attribute updates to prevent excessive re-renders
+            // Only dispatch after user has stopped clicking for 500ms
+            clearTimeout(this._flowUpdateTimeout);
+            this._flowUpdateTimeout = setTimeout(() => {
+                this.dispatchFlowAttributeChange('selectedMarkerId', this._selectedMarkerId);
+                this.dispatchFlowAttributeChange('selectedMarkerTitle', this._selectedMarkerTitle);
+                this.dispatchFlowAttributeChange('selectedMarkerLatitude', this._selectedMarkerLatitude);
+                this.dispatchFlowAttributeChange('selectedMarkerLongitude', this._selectedMarkerLongitude);
+                this.dispatchFlowAttributeChange('selectedMarkerData', this._selectedMarkerData);
+            }, 500);
         }
     }
     
