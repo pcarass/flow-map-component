@@ -32,6 +32,9 @@ export default class FlowMapCpe extends LightningElement {
     // SECTION COLLAPSE STATE
     // ============================================
     
+    _hasInitialized = false;
+    _previousInputValues = {};
+    
     @track expandedSections = {
         mapType: true,
         dataSource: true,
