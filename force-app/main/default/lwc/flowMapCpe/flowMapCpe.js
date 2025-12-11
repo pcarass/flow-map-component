@@ -1,134 +1,143 @@
-import { LightningElement, api, track, wire } from 'lwc';
-import getQueryableObjects from '@salesforce/apex/FlowMapSchemaService.getQueryableObjects';
+import { LightningElement, api, track } from 'lwc';
 
 export default class FlowMapCpe extends LightningElement {
-    _builderContext;
-    @api 
-    get builderContext() {
-        return this._builderContext;
-    }
-    set builderContext(value) {
-        this._builderContext = value;
-    }
-    
-    _inputVariables = [];
-    @api
-    get inputVariables() {
-        return this._inputVariables;
-    }
-    set inputVariables(value) {
-        this._inputVariables = value || [];
-        this.initializeValues();
-    }
-    
+    // Flow Builder provides these
+    @api builderContext;
+    @api inputVariables;
     @api genericTypeMappings;
-    
-    // Properties
-    @track mapType = 'google';
-    @track height = '400px';
-    @track sourceType = 'query';
-    @track objectApiName = '';
-    @track titleField = '';
-    @track latitudeField = '';
-    @track longitudeField = '';
-    @track zoomLevel = 10;
-    
-    @track objectOptions = [];
-    @track isLoadingObjects = true;
-    
-    @wire(getQueryableObjects)
-    wiredObjects({ error, data }) {
-        this.isLoadingObjects = false;
-        if (data) {
-            this.objectOptions = data.map(obj => ({
-                label: obj.label,
-                value: obj.value
-            }));
+
+    // Local state for UI
+    @track _values = {};
+    _isInitialized = false;
+
+    connectedCallback() {
+        this._initializeValues();
+    }
+
+    renderedCallback() {
+        if (!this._isInitialized && this.inputVariables) {
+            this._initializeValues();
         }
     }
-    
-    initializeValues() {
-        if (!this._inputVariables || this._inputVariables.length === 0) return;
+
+    _initializeValues() {
+        if (!this.inputVariables) {
+            return;
+        }
+
+        this._isInitialized = true;
         
-        this._inputVariables.forEach(variable => {
-            if (variable.value !== undefined && variable.value !== null) {
-                const name = variable.name;
-                const val = variable.value;
-                
-                if (name === 'mapType') this.mapType = String(val);
-                else if (name === 'height') this.height = String(val);
-                else if (name === 'sourceType') this.sourceType = String(val);
-                else if (name === 'objectApiName') this.objectApiName = String(val);
-                else if (name === 'titleField') this.titleField = String(val);
-                else if (name === 'latitudeField') this.latitudeField = String(val);
-                else if (name === 'longitudeField') this.longitudeField = String(val);
-                else if (name === 'zoomLevel') this.zoomLevel = parseInt(val, 10) || 10;
+        // Build a map of current values
+        const values = {};
+        this.inputVariables.forEach(variable => {
+            if (variable && variable.name !== undefined) {
+                values[variable.name] = variable.value;
             }
         });
+        
+        this._values = values;
     }
-    
-    dispatchValueChange(name, value, dataType) {
+
+    // Get a value with a default
+    _getValue(name, defaultValue) {
+        if (this._values && this._values[name] !== undefined && this._values[name] !== null) {
+            return this._values[name];
+        }
+        return defaultValue;
+    }
+
+    // Dispatch a value change to Flow Builder
+    _dispatchChange(name, value, dataType) {
+        this._values[name] = value;
+        
+        const detail = {
+            name: name,
+            newValue: value,
+            newValueDataType: dataType || 'String'
+        };
+        
         const event = new CustomEvent('configuration_editor_input_value_changed', {
             bubbles: true,
             cancelable: false,
             composed: true,
-            detail: {
-                name: name,
-                newValue: value,
-                newValueDataType: dataType
-            }
+            detail: detail
         });
+        
         this.dispatchEvent(event);
     }
+
+    // ============================================
+    // GETTERS FOR UI
+    // ============================================
     
-    // Getters
+    get mapType() {
+        return this._getValue('mapType', 'google');
+    }
+
+    get height() {
+        return this._getValue('height', '400px');
+    }
+
+    get zoomLevel() {
+        const val = this._getValue('zoomLevel', 10);
+        return typeof val === 'number' ? val : parseInt(val, 10) || 10;
+    }
+
+    get objectApiName() {
+        return this._getValue('objectApiName', '');
+    }
+
+    get isGoogleMaps() {
+        return this.mapType === 'google';
+    }
+
     get isLeafletMaps() {
         return this.mapType === 'leaflet';
     }
-    
-    get googleMapClass() {
-        return this.mapType === 'google' ? 'map-option selected' : 'map-option';
+
+    get googleButtonVariant() {
+        return this.isGoogleMaps ? 'brand' : 'neutral';
     }
-    
-    get leafletMapClass() {
-        return this.mapType === 'leaflet' ? 'map-option selected' : 'map-option';
+
+    get leafletButtonVariant() {
+        return this.isLeafletMaps ? 'brand' : 'neutral';
     }
-    
-    // Handlers
-    selectGoogleMaps() {
-        this.mapType = 'google';
-        this.dispatchValueChange('mapType', 'google', 'String');
+
+    // ============================================
+    // EVENT HANDLERS
+    // ============================================
+
+    handleGoogleClick() {
+        this._dispatchChange('mapType', 'google', 'String');
     }
-    
-    selectLeafletMaps() {
-        this.mapType = 'leaflet';
-        this.dispatchValueChange('mapType', 'leaflet', 'String');
+
+    handleLeafletClick() {
+        this._dispatchChange('mapType', 'leaflet', 'String');
     }
-    
+
     handleHeightChange(event) {
-        this.height = event.target.value;
-        this.dispatchValueChange('height', this.height, 'String');
+        const value = event.target.value || '400px';
+        this._dispatchChange('height', value, 'String');
     }
-    
+
+    handleZoomChange(event) {
+        const value = parseInt(event.target.value, 10) || 10;
+        this._dispatchChange('zoomLevel', value, 'Integer');
+    }
+
     handleObjectChange(event) {
-        this.objectApiName = event.detail.value;
-        this.dispatchValueChange('objectApiName', this.objectApiName, 'String');
+        const value = event.detail.value || '';
+        this._dispatchChange('objectApiName', value, 'String');
     }
-    
-    handleZoomLevelChange(event) {
-        this.zoomLevel = parseInt(event.target.value, 10) || 10;
-        this.dispatchValueChange('zoomLevel', this.zoomLevel, 'Integer');
-    }
-    
+
+    // ============================================
+    // VALIDATION
+    // ============================================
+
     @api
     validate() {
-        const validity = [];
-        if (this.sourceType === 'query' && !this.objectApiName) {
-            validity.push({
-                key: 'objectApiName',
-                errorString: 'Object is required'
-            });
-        }
-        return validity;
+        // Return empty array = valid
+        // Return array with objects = invalid
+        return [];
     }
 }
