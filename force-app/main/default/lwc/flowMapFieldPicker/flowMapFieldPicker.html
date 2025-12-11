@@ -1,0 +1,136 @@
+<template>
+    <div class={containerClass}>
+        <!-- Label -->
+        <label class="slds-form-element__label">
+            <template lwc:if={required}>
+                <abbr class="slds-required" title="required">*</abbr>
+            </template>
+            {label}
+            <template lwc:if={helpText}>
+                <lightning-helptext content={helpText}></lightning-helptext>
+            </template>
+        </label>
+        
+        <!-- Combobox Container -->
+        <div class="slds-form-element__control">
+            <div class={dropdownClass}>
+                <div class="slds-combobox__form-element slds-input-has-icon slds-input-has-icon_right" role="none">
+                    <!-- Input with selected value display -->
+                    <input
+                        type="text"
+                        class="slds-input slds-combobox__input"
+                        role="combobox"
+                        aria-expanded={isOpen}
+                        aria-haspopup="listbox"
+                        placeholder={placeholder}
+                        value={inputValue}
+                        onclick={handleInputClick}
+                        onchange={handleInputChange}
+                        onfocus={handleInputFocus}
+                        disabled={disabled}
+                        readonly={false}
+                    />
+                    
+                    <!-- Field type icon (when selected) -->
+                    <template lwc:if={selectedField}>
+                        <span class="slds-icon_container slds-input__icon slds-input__icon_left field-type-icon">
+                            <lightning-icon 
+                                icon-name={selectedField.iconName} 
+                                size="xx-small"
+                                alternative-text="Field type">
+                            </lightning-icon>
+                        </span>
+                    </template>
+                    
+                    <!-- Clear button -->
+                    <template lwc:if={showClearButton}>
+                        <button 
+                            class="slds-button slds-button_icon slds-input__icon slds-input__icon_right clear-button"
+                            title="Clear"
+                            onclick={handleClear}>
+                            <lightning-icon icon-name="utility:close" size="xx-small" alternative-text="Clear"></lightning-icon>
+                        </button>
+                    </template>
+                    
+                    <!-- Dropdown icon -->
+                    <template lwc:if={objectApiName}>
+                        <span class="slds-icon_container slds-input__icon slds-input__icon_right dropdown-icon">
+                            <lightning-icon 
+                                icon-name="utility:search" 
+                                size="xx-small"
+                                alternative-text="Search fields">
+                            </lightning-icon>
+                        </span>
+                    </template>
+                </div>
+                
+                <!-- Dropdown List -->
+                <template lwc:if={isOpen}>
+                    <div class="slds-dropdown slds-dropdown_length-10 slds-dropdown_fluid" role="listbox">
+                        <ul class="slds-listbox slds-listbox_vertical" role="presentation">
+                            <!-- Loading state -->
+                            <template lwc:if={isLoading}>
+                                <li class="slds-listbox__item loading-item">
+                                    <lightning-spinner alternative-text="Loading" size="small"></lightning-spinner>
+                                    <span>Loading fields...</span>
+                                </li>
+                            </template>
+                            
+                            <!-- No object selected -->
+                            <template lwc:elseif={!objectApiName}>
+                                <li class="slds-listbox__item empty-item">
+                                    <span>Select an object first</span>
+                                </li>
+                            </template>
+                            
+                            <!-- No fields found -->
+                            <template lwc:elseif={!hasFields}>
+                                <li class="slds-listbox__item empty-item">
+                                    <span>No fields found</span>
+                                </li>
+                            </template>
+                            
+                            <!-- Field options -->
+                            <template lwc:else>
+                                <template for:each={filteredFields} for:item="field">
+                                    <li 
+                                        key={field.value} 
+                                        role="presentation" 
+                                        class="slds-listbox__item"
+                                        data-value={field.value}
+                                        onclick={handleFieldSelect}>
+                                        <div class="slds-media slds-listbox__option slds-listbox__option_plain slds-media_small" role="option">
+                                            <span class="slds-media__figure slds-listbox__option-icon">
+                                                <lightning-icon 
+                                                    icon-name={field.iconName} 
+                                                    size="x-small"
+                                                    alternative-text={field.fieldType}>
+                                                </lightning-icon>
+                                            </span>
+                                            <span class="slds-media__body">
+                                                <span class="slds-truncate field-label" title={field.label}>
+                                                    {field.label}
+                                                </span>
+                                                <span class="slds-truncate field-api-name" title={field.value}>
+                                                    {field.value}
+                                                </span>
+                                            </span>
+                                            <template lwc:if={field.isCustom}>
+                                                <span class="custom-badge">Custom</span>
+                                            </template>
+                                        </div>
+                                    </li>
+                                </template>
+                            </template>
+                        </ul>
+                    </div>
+                </template>
+            </div>
+        </div>
+        
+        <!-- Error message -->
+        <template lwc:if={errorMessage}>
+            <div class="slds-form-element__help">{errorMessage}</div>
+        </template>
+    </div>
+</template>
