@@ -6,7 +6,7 @@ export default class FlowMapFieldPicker extends LightningElement {
     @api placeholder = 'Search fields...';
     @api objectApiName;
     @api value;
-    @api fieldCategory = 'all'; // 'all', 'text', 'location', 'address'
+    @api fieldCategory = 'all';
     @api required = false;
     @api helpText;
     @api disabled = false;
@@ -15,12 +15,13 @@ export default class FlowMapFieldPicker extends LightningElement {
     @track filteredFields = [];
     @track isOpen = false;
     @track searchTerm = '';
-    @track isLoading = false;
+    @track isLoading = true;
     @track selectedField = null;
     @track errorMessage;
     
+    _previousObjectApiName = null;
+    
     connectedCallback() {
-        // Add click outside listener
         this.handleClickOutside = this.handleClickOutside.bind(this);
         document.addEventListener('click', this.handleClickOutside);
     }
@@ -47,6 +48,14 @@ export default class FlowMapFieldPicker extends LightningElement {
             if (this.value) {
                 this.selectedField = this.fields.find(f => f.value === this.value);
             }
+            
+            // If object changed, clear previous selection
+            if (this._previousObjectApiName && this._previousObjectApiName !== this.objectApiName) {
+                this.selectedField = null;
+                this.value = '';
+            }
+            this._previousObjectApiName = this.objectApiName;
+            
         } else if (error) {
             this.errorMessage = 'Error loading fields';
             this.fields = [];
@@ -64,7 +73,7 @@ export default class FlowMapFieldPicker extends LightningElement {
     }
     
     get noFieldsFound() {
-        return !this.hasFields;
+        return this.objectApiName && !this.isLoading && !this.hasFields;
     }
     
     get displayValue() {
@@ -97,31 +106,38 @@ export default class FlowMapFieldPicker extends LightningElement {
         return this.value && !this.disabled;
     }
     
-    handleInputClick() {
+    handleInputClick(event) {
+        event.stopPropagation();
         if (!this.disabled && this.objectApiName) {
-            this.isOpen = !this.isOpen;
-            if (this.isOpen) {
-                this.searchTerm = '';
-                this.filteredFields = this.fields;
-            }
+            this.isOpen = true;
+            this.searchTerm = '';
+            this.filteredFields = this.fields;
         }
     }
     
     handleInputChange(event) {
         this.searchTerm = event.target.value;
-        this.filterFields();
         
-        // Also allow manual entry
-        if (!this.isOpen) {
-            this.dispatchChange(this.searchTerm);
+        // Open dropdown when typing
+        if (!this.isOpen && this.objectApiName && this.fields.length > 0) {
+            this.isOpen = true;
         }
+        
+        this.filterFields();
     }
     
-    handleInputFocus() {
-        if (!this.disabled && this.objectApiName && this.fields.length > 0) {
+    handleInputFocus(event) {
+        if (!this.disabled && this.objectApiName) {
             this.isOpen = true;
             this.searchTerm = '';
             this.filteredFields = this.fields;
+        }
+    }
+    
+    handleKeyDown(event) {
+        // Open dropdown on any key press
+        if (!this.isOpen && this.objectApiName && this.fields.length > 0) {
+            this.isOpen = true;
         }
     }
     
@@ -139,6 +155,7 @@ export default class FlowMapFieldPicker extends LightningElement {
     }
     
     handleFieldSelect(event) {
+        event.stopPropagation();
         const fieldValue = event.currentTarget.dataset.value;
         this.selectedField = this.fields.find(f => f.value === fieldValue);
         this.value = fieldValue;
@@ -163,7 +180,6 @@ export default class FlowMapFieldPicker extends LightningElement {
         }));
     }
     
-    // Allow setting value programmatically
     @api
     setValue(newValue) {
         this.value = newValue;
