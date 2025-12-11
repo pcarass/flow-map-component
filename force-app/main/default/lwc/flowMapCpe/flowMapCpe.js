@@ -2,138 +2,35 @@ import { LightningElement, api, track, wire } from 'lwc';
 import getQueryableObjects from '@salesforce/apex/FlowMapSchemaService.getQueryableObjects';
 import getPreviewData from '@salesforce/apex/FlowMapSchemaService.getPreviewData';
 
-// Storage key for this CPE session
-const STORAGE_KEY = 'flowMapCpe_state';
-
 export default class FlowMapCpe extends LightningElement {
     // ============================================
     // FLOW BUILDER CONTEXT
     // ============================================
     
     _builderContext;
-    _cacheKey = null;
-    
     @api 
     get builderContext() {
         return this._builderContext;
     }
     set builderContext(value) {
         this._builderContext = value;
-        // Generate a unique key for this flow/component
-        if (value && value.actionCalls) {
-            this._cacheKey = STORAGE_KEY + '_' + JSON.stringify(value.actionCalls).substring(0, 50);
-        } else {
-            this._cacheKey = STORAGE_KEY + '_default';
-        }
     }
     
     _inputVariables = [];
-    _localState = {}; // Track local changes not yet saved by Flow
-    _hasLoadedFromFlow = false;
-    
     @api
     get inputVariables() {
         return this._inputVariables;
     }
     set inputVariables(value) {
         this._inputVariables = value || [];
-        
-        // First time: load from inputVariables (Flow's saved state)
-        if (!this._hasLoadedFromFlow) {
-            this._hasLoadedFromFlow = true;
-            this.initializeFromFlow();
-        }
-        
-        // Always apply local state on top (preserves unsaved changes)
-        this.applyLocalState();
-    }
-    
-    initializeFromFlow() {
-        console.log('[FlowMapCpe] initializeFromFlow called');
-        // Load values from Flow's inputVariables
-        this._inputVariables.forEach(variable => {
-            if (variable.value !== undefined && variable.value !== null) {
-                this.setPropertyValue(variable.name, variable.value);
-            }
-        });
-        
-        // Also load any cached local state from sessionStorage
-        this.loadLocalStateFromStorage();
-    }
-    
-    loadLocalStateFromStorage() {
-        try {
-            const stored = sessionStorage.getItem(this._cacheKey || STORAGE_KEY);
-            if (stored) {
-                this._localState = JSON.parse(stored);
-            }
-        } catch (e) {
-            console.warn('FlowMapCpe: Could not load from sessionStorage', e);
+        // Only initialize once - prevents overwriting user changes on Flow re-render
+        if (!this._hasInitialized) {
+            this._hasInitialized = true;
+            this.initializeValues();
         }
     }
     
-    saveLocalStateToStorage() {
-        try {
-            sessionStorage.setItem(this._cacheKey || STORAGE_KEY, JSON.stringify(this._localState));
-        } catch (e) {
-            console.warn('FlowMapCpe: Could not save to sessionStorage', e);
-        }
-    }
-    
-    applyLocalState() {
-        console.log('[FlowMapCpe] applyLocalState:', JSON.stringify(this._localState));
-        // Apply any local changes that haven't been saved by Flow yet
-        Object.keys(this._localState).forEach(key => {
-            this.setPropertyValue(key, this._localState[key]);
-        });
-        
-        // Determine center type
-        if (this.centerLatitude || this.centerLongitude) {
-            this.centerType = 'coordinates';
-        } else if (this.centerCity || this.centerCountry || this.centerStreet) {
-            this.centerType = 'address';
-        } else {
-            this.centerType = 'auto';
-        }
-    }
-    
-    setPropertyValue(name, value) {
-        if (this[name] === undefined) return;
-        
-        if (typeof this[name] === 'boolean') {
-            this[name] = value === true || value === 'true';
-        } else if (typeof this[name] === 'number') {
-            this[name] = Number(value) || this[name];
-        } else {
-            this[name] = value;
-        }
-    }
-    
-    // Helper to update local state, storage, and dispatch to Flow
-    updateValue(name, value, dataType = 'String') {
-        console.log('[FlowMapCpe] updateValue:', name, '=', value);
-        // Update component property
-        this[name] = value;
-        
-        // Track in local state
-        this._localState[name] = value;
-        
-        // Persist to sessionStorage
-        this.saveLocalStateToStorage();
-        
-        // Dispatch to Flow
-        this.dispatchValueChange(name, value, dataType);
-    }
-    
-    // Clear local state when Flow successfully saves (called on successful save)
-    clearLocalState() {
-        this._localState = {};
-        try {
-            sessionStorage.removeItem(this._cacheKey || STORAGE_KEY);
-        } catch (e) {
-            // Ignore
-        }
-    }
+    _hasInitialized = false;
     
     @api genericTypeMappings;
     
@@ -272,8 +169,6 @@ export default class FlowMapCpe extends LightningElement {
     // ============================================
     
     initializeValues() {
-        // This method is now only called once via initializeFromInputVariables
-        // It processes the inputVariables into the module-level cache
         if (!this._inputVariables || this._inputVariables.length === 0) return;
         
         const valueMap = {};
@@ -282,9 +177,6 @@ export default class FlowMapCpe extends LightningElement {
                 valueMap[variable.name] = variable.value;
             }
         });
-        
-        // Store in cache
-        Object.assign(STATE_CACHE.values, valueMap);
         
         // String properties
         const stringProps = [
@@ -684,15 +576,18 @@ export default class FlowMapCpe extends LightningElement {
     // ============================================
     
     selectGoogleMaps() {
-        this.updateValue('mapType', 'google', 'String');
+        this.mapType = 'google';
+        this.dispatchValueChange('mapType', 'google', 'String');
     }
     
     selectLeafletMaps() {
-        this.updateValue('mapType', 'leaflet', 'String');
+        this.mapType = 'leaflet';
+        this.dispatchValueChange('mapType', 'leaflet', 'String');
     }
     
     handleHeightChange(event) {
-        this.updateValue('height', event.target.value, 'String');
+        this.height = event.target.value;
+        this.dispatchValueChange('height', this.height, 'String');
     }
 
     // ============================================
@@ -700,11 +595,14 @@ export default class FlowMapCpe extends LightningElement {
     // ============================================
     
     handleSourceTypeChange(event) {
-        this.updateValue('sourceType', event.currentTarget.dataset.value, 'String');
+        const value = event.currentTarget.dataset.value;
+        this.sourceType = value;
+        this.dispatchValueChange('sourceType', value, 'String');
     }
     
     handleObjectChange(event) {
-        this.updateValue('objectApiName', event.detail.value, 'String');
+        this.objectApiName = event.detail.value;
+        this.dispatchValueChange('objectApiName', this.objectApiName, 'String');
         
         // Clear field mappings when object changes
         this.titleField = '';
@@ -722,16 +620,18 @@ export default class FlowMapCpe extends LightningElement {
     }
     
     handleQueryFilterChange(event) {
-        this.updateValue('queryFilter', event.target.value, 'String');
+        this.queryFilter = event.target.value;
+        this.dispatchValueChange('queryFilter', this.queryFilter, 'String');
     }
     
     handleRecordLimitChange(event) {
-        const value = parseInt(event.target.value, 10) || 100;
-        this.updateValue('recordLimit', value, 'Integer');
+        this.recordLimit = parseInt(event.target.value, 10) || 100;
+        this.dispatchValueChange('recordLimit', this.recordLimit, 'Integer');
     }
     
     handleMarkersJsonChange(event) {
-        this.updateValue('markersJson', event.detail ? event.detail.value : event.target.value, 'String');
+        this.markersJson = event.detail ? event.detail.value : event.target.value;
+        this.dispatchValueChange('markersJson', this.markersJson, 'String');
     }
 
     // ============================================
@@ -739,48 +639,58 @@ export default class FlowMapCpe extends LightningElement {
     // ============================================
     
     handleTitleFieldChange(event) {
-        this.updateValue('titleField', event.detail.value, 'String');
+        this.titleField = event.detail.value;
+        this.dispatchValueChange('titleField', this.titleField, 'String');
         this.loadPreview();
     }
     
     handleDescriptionFieldChange(event) {
-        this.updateValue('descriptionField', event.detail.value, 'String');
+        this.descriptionField = event.detail.value;
+        this.dispatchValueChange('descriptionField', this.descriptionField, 'String');
     }
     
     handleCustomIconFieldChange(event) {
-        this.updateValue('customIconField', event.detail.value, 'String');
+        this.customIconField = event.detail.value;
+        this.dispatchValueChange('customIconField', this.customIconField, 'String');
     }
     
     handleStreetFieldChange(event) {
-        this.updateValue('streetField', event.detail.value, 'String');
+        this.streetField = event.detail.value;
+        this.dispatchValueChange('streetField', this.streetField, 'String');
         this.loadPreview();
     }
     
     handleCityFieldChange(event) {
-        this.updateValue('cityField', event.detail.value, 'String');
+        this.cityField = event.detail.value;
+        this.dispatchValueChange('cityField', this.cityField, 'String');
         this.loadPreview();
     }
     
     handleStateFieldChange(event) {
-        this.updateValue('stateField', event.detail.value, 'String');
+        this.stateField = event.detail.value;
+        this.dispatchValueChange('stateField', this.stateField, 'String');
         this.loadPreview();
     }
     
     handlePostalCodeFieldChange(event) {
-        this.updateValue('postalCodeField', event.detail.value, 'String');
+        this.postalCodeField = event.detail.value;
+        this.dispatchValueChange('postalCodeField', this.postalCodeField, 'String');
     }
     
     handleCountryFieldChange(event) {
-        this.updateValue('countryField', event.detail.value, 'String');
+        this.countryField = event.detail.value;
+        this.dispatchValueChange('countryField', this.countryField, 'String');
         this.loadPreview();
     }
     
     handleLatitudeFieldChange(event) {
-        this.updateValue('latitudeField', event.detail.value, 'String');
+        this.latitudeField = event.detail.value;
+        this.dispatchValueChange('latitudeField', this.latitudeField, 'String');
     }
     
     handleLongitudeFieldChange(event) {
-        this.updateValue('longitudeField', event.detail.value, 'String');
+        this.longitudeField = event.detail.value;
+        this.dispatchValueChange('longitudeField', this.longitudeField, 'String');
     }
 
     // ============================================
@@ -792,35 +702,43 @@ export default class FlowMapCpe extends LightningElement {
     }
     
     handleCenterLatitudeChange(event) {
-        this.updateValue('centerLatitude', event.target.value, 'String');
+        this.centerLatitude = event.target.value;
+        this.dispatchValueChange('centerLatitude', this.centerLatitude, 'String');
     }
     
     handleCenterLongitudeChange(event) {
-        this.updateValue('centerLongitude', event.target.value, 'String');
+        this.centerLongitude = event.target.value;
+        this.dispatchValueChange('centerLongitude', this.centerLongitude, 'String');
     }
     
     handleCenterStreetChange(event) {
-        this.updateValue('centerStreet', event.target.value, 'String');
+        this.centerStreet = event.target.value;
+        this.dispatchValueChange('centerStreet', this.centerStreet, 'String');
     }
     
     handleCenterCityChange(event) {
-        this.updateValue('centerCity', event.target.value, 'String');
+        this.centerCity = event.target.value;
+        this.dispatchValueChange('centerCity', this.centerCity, 'String');
     }
     
     handleCenterStateChange(event) {
-        this.updateValue('centerState', event.target.value, 'String');
+        this.centerState = event.target.value;
+        this.dispatchValueChange('centerState', this.centerState, 'String');
     }
     
     handleCenterPostalCodeChange(event) {
-        this.updateValue('centerPostalCode', event.target.value, 'String');
+        this.centerPostalCode = event.target.value;
+        this.dispatchValueChange('centerPostalCode', this.centerPostalCode, 'String');
     }
     
     handleCenterCountryChange(event) {
-        this.updateValue('centerCountry', event.target.value, 'String');
+        this.centerCountry = event.target.value;
+        this.dispatchValueChange('centerCountry', this.centerCountry, 'String');
     }
     
     handleZoomLevelChange(event) {
-        this.updateValue('zoomLevel', parseInt(event.target.value, 10) || 10, 'Integer');
+        this.zoomLevel = parseInt(event.target.value, 10);
+        this.dispatchValueChange('zoomLevel', this.zoomLevel, 'Integer');
     }
 
     // ============================================
@@ -828,19 +746,24 @@ export default class FlowMapCpe extends LightningElement {
     // ============================================
     
     handleMarkerTypeChange(event) {
-        this.updateValue('markerType', event.currentTarget.dataset.value, 'String');
+        const value = event.currentTarget.dataset.value;
+        this.markerType = value;
+        this.dispatchValueChange('markerType', value, 'String');
     }
     
     handleMarkerFillColorChange(event) {
-        this.updateValue('markerFillColor', event.target.value, 'String');
+        this.markerFillColor = event.target.value;
+        this.dispatchValueChange('markerFillColor', this.markerFillColor, 'String');
     }
     
     handleMarkerStrokeColorChange(event) {
-        this.updateValue('markerStrokeColor', event.target.value, 'String');
+        this.markerStrokeColor = event.target.value;
+        this.dispatchValueChange('markerStrokeColor', this.markerStrokeColor, 'String');
     }
     
     handleCustomIconSvgChange(event) {
-        this.updateValue('customIconSvg', event.target.value, 'String');
+        this.customIconSvg = event.target.value;
+        this.dispatchValueChange('customIconSvg', this.customIconSvg, 'String');
     }
 
     // ============================================
@@ -848,15 +771,18 @@ export default class FlowMapCpe extends LightningElement {
     // ============================================
     
     handleEnableClusteringChange(event) {
-        this.updateValue('enableClustering', event.target.checked, 'Boolean');
+        this.enableClustering = event.target.checked;
+        this.dispatchValueChange('enableClustering', this.enableClustering, 'Boolean');
     }
     
     handleShowCoverageOnHoverChange(event) {
-        this.updateValue('showCoverageOnHover', event.target.checked, 'Boolean');
+        this.showCoverageOnHover = event.target.checked;
+        this.dispatchValueChange('showCoverageOnHover', this.showCoverageOnHover, 'Boolean');
     }
     
     handleMaxClusterRadiusChange(event) {
-        this.updateValue('maxClusterRadius', parseInt(event.target.value, 10) || 80, 'Integer');
+        this.maxClusterRadius = parseInt(event.target.value, 10);
+        this.dispatchValueChange('maxClusterRadius', this.maxClusterRadius, 'Integer');
     }
 
     // ============================================
@@ -864,35 +790,43 @@ export default class FlowMapCpe extends LightningElement {
     // ============================================
     
     handleEnableDrawingChange(event) {
-        this.updateValue('enableDrawing', event.target.checked, 'Boolean');
+        this.enableDrawing = event.target.checked;
+        this.dispatchValueChange('enableDrawing', this.enableDrawing, 'Boolean');
     }
     
     handleDrawToolMarkerChange(event) {
-        this.updateValue('drawToolMarker', event.target.checked, 'Boolean');
+        this.drawToolMarker = event.target.checked;
+        this.dispatchValueChange('drawToolMarker', this.drawToolMarker, 'Boolean');
     }
     
     handleDrawToolLineChange(event) {
-        this.updateValue('drawToolLine', event.target.checked, 'Boolean');
+        this.drawToolLine = event.target.checked;
+        this.dispatchValueChange('drawToolLine', this.drawToolLine, 'Boolean');
     }
     
     handleDrawToolPolygonChange(event) {
-        this.updateValue('drawToolPolygon', event.target.checked, 'Boolean');
+        this.drawToolPolygon = event.target.checked;
+        this.dispatchValueChange('drawToolPolygon', this.drawToolPolygon, 'Boolean');
     }
     
     handleDrawToolCircleChange(event) {
-        this.updateValue('drawToolCircle', event.target.checked, 'Boolean');
+        this.drawToolCircle = event.target.checked;
+        this.dispatchValueChange('drawToolCircle', this.drawToolCircle, 'Boolean');
     }
     
     handleDrawToolEditChange(event) {
-        this.updateValue('drawToolEdit', event.target.checked, 'Boolean');
+        this.drawToolEdit = event.target.checked;
+        this.dispatchValueChange('drawToolEdit', this.drawToolEdit, 'Boolean');
     }
     
     handleDrawToolDeleteChange(event) {
-        this.updateValue('drawToolDelete', event.target.checked, 'Boolean');
+        this.drawToolDelete = event.target.checked;
+        this.dispatchValueChange('drawToolDelete', this.drawToolDelete, 'Boolean');
     }
     
     handleDrawToolbarPositionChange(event) {
-        this.updateValue('drawToolbarPosition', event.detail.value, 'String');
+        this.drawToolbarPosition = event.detail.value;
+        this.dispatchValueChange('drawToolbarPosition', this.drawToolbarPosition, 'String');
     }
 
     // ============================================
@@ -900,19 +834,23 @@ export default class FlowMapCpe extends LightningElement {
     // ============================================
     
     handleTitleChange(event) {
-        this.updateValue('title', event.target.value, 'String');
+        this.title = event.target.value;
+        this.dispatchValueChange('title', this.title, 'String');
     }
     
     handleCaptionChange(event) {
-        this.updateValue('caption', event.target.value, 'String');
+        this.caption = event.target.value;
+        this.dispatchValueChange('caption', this.caption, 'String');
     }
     
     handleIconNameChange(event) {
-        this.updateValue('iconName', event.target.value, 'String');
+        this.iconName = event.target.value;
+        this.dispatchValueChange('iconName', this.iconName, 'String');
     }
     
     handleIsJoinedChange(event) {
-        this.updateValue('isJoined', event.target.checked, 'Boolean');
+        this.isJoined = event.target.checked;
+        this.dispatchValueChange('isJoined', this.isJoined, 'Boolean');
     }
 
     // ============================================
@@ -920,51 +858,63 @@ export default class FlowMapCpe extends LightningElement {
     // ============================================
     
     handleListViewVisibilityChange(event) {
-        this.updateValue('listViewVisibility', event.detail.value, 'String');
+        this.listViewVisibility = event.detail.value;
+        this.dispatchValueChange('listViewVisibility', this.listViewVisibility, 'String');
     }
     
     handleIsSearchableChange(event) {
-        this.updateValue('isSearchable', event.target.checked, 'Boolean');
+        this.isSearchable = event.target.checked;
+        this.dispatchValueChange('isSearchable', this.isSearchable, 'Boolean');
     }
     
     handleSearchPlaceholderChange(event) {
-        this.updateValue('searchPlaceholder', event.target.value, 'String');
+        this.searchPlaceholder = event.target.value;
+        this.dispatchValueChange('searchPlaceholder', this.searchPlaceholder, 'String');
     }
     
     handleSearchPositionChange(event) {
-        this.updateValue('searchPosition', event.detail.value, 'String');
+        this.searchPosition = event.detail.value;
+        this.dispatchValueChange('searchPosition', this.searchPosition, 'String');
     }
     
     handleEnableMarkerDragChange(event) {
-        this.updateValue('enableMarkerDrag', event.target.checked, 'Boolean');
+        this.enableMarkerDrag = event.target.checked;
+        this.dispatchValueChange('enableMarkerDrag', this.enableMarkerDrag, 'Boolean');
     }
     
     handleListPositionChange(event) {
-        this.updateValue('listPosition', event.detail.value, 'String');
+        this.listPosition = event.detail.value;
+        this.dispatchValueChange('listPosition', this.listPosition, 'String');
     }
     
     handleListCollapsibleChange(event) {
-        this.updateValue('listCollapsible', event.target.checked, 'Boolean');
+        this.listCollapsible = event.target.checked;
+        this.dispatchValueChange('listCollapsible', this.listCollapsible, 'Boolean');
     }
     
     handlePopupTitleFieldChange(event) {
-        this.updateValue('popupTitleField', event.detail.value, 'String');
+        this.popupTitleField = event.detail.value;
+        this.dispatchValueChange('popupTitleField', this.popupTitleField, 'String');
     }
     
     handlePopupDescriptionFieldChange(event) {
-        this.updateValue('popupDescriptionField', event.detail.value, 'String');
+        this.popupDescriptionField = event.detail.value;
+        this.dispatchValueChange('popupDescriptionField', this.popupDescriptionField, 'String');
     }
     
     handlePopupAddressFieldChange(event) {
-        this.updateValue('popupAddressField', event.detail.value, 'String');
+        this.popupAddressField = event.detail.value;
+        this.dispatchValueChange('popupAddressField', this.popupAddressField, 'String');
     }
     
     handlePopupCustomFieldsJsonChange(event) {
-        this.updateValue('popupCustomFieldsJson', event.target.value, 'String');
+        this.popupCustomFieldsJson = event.target.value;
+        this.dispatchValueChange('popupCustomFieldsJson', this.popupCustomFieldsJson, 'String');
     }
     
     handlePopupShowNavigateButtonChange(event) {
-        this.updateValue('popupShowNavigateButton', event.target.checked, 'Boolean');
+        this.popupShowNavigateButton = event.target.checked;
+        this.dispatchValueChange('popupShowNavigateButton', this.popupShowNavigateButton, 'Boolean');
     }
 
     // ============================================
