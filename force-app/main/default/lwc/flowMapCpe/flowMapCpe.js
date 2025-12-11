@@ -2,12 +2,8 @@ import { LightningElement, api, track, wire } from 'lwc';
 import getQueryableObjects from '@salesforce/apex/FlowMapSchemaService.getQueryableObjects';
 import getPreviewData from '@salesforce/apex/FlowMapSchemaService.getPreviewData';
 
-// Module-level state cache - persists even when component is destroyed/recreated
-// This is necessary because Flow Builder frequently re-renders the CPE
-const STATE_CACHE = {
-    values: {},
-    initialized: false
-};
+// Storage key for this CPE session
+const STORAGE_KEY = 'flowMapCpe_state';
 
 export default class FlowMapCpe extends LightningElement {
     // ============================================
@@ -15,56 +11,83 @@ export default class FlowMapCpe extends LightningElement {
     // ============================================
     
     _builderContext;
+    _cacheKey = null;
+    
     @api 
     get builderContext() {
         return this._builderContext;
     }
     set builderContext(value) {
         this._builderContext = value;
+        // Generate a unique key for this flow/component
+        if (value && value.actionCalls) {
+            this._cacheKey = STORAGE_KEY + '_' + JSON.stringify(value.actionCalls).substring(0, 50);
+        } else {
+            this._cacheKey = STORAGE_KEY + '_default';
+        }
     }
     
     _inputVariables = [];
+    _localState = {}; // Track local changes not yet saved by Flow
+    _hasLoadedFromFlow = false;
+    
     @api
     get inputVariables() {
         return this._inputVariables;
     }
     set inputVariables(value) {
         this._inputVariables = value || [];
-        // Use module-level cache to determine if we should initialize
-        // This persists even if Flow Builder destroys and recreates the component
-        if (!STATE_CACHE.initialized) {
-            STATE_CACHE.initialized = true;
-            this.initializeFromInputVariables();
+        
+        // First time: load from inputVariables (Flow's saved state)
+        if (!this._hasLoadedFromFlow) {
+            this._hasLoadedFromFlow = true;
+            this.initializeFromFlow();
         }
-        // Always restore from cache (handles component recreation)
-        this.restoreFromCache();
+        
+        // Always apply local state on top (preserves unsaved changes)
+        this.applyLocalState();
     }
     
-    initializeFromInputVariables() {
-        // Parse inputVariables into the cache
+    initializeFromFlow() {
+        console.log('[FlowMapCpe] initializeFromFlow called');
+        // Load values from Flow's inputVariables
         this._inputVariables.forEach(variable => {
             if (variable.value !== undefined && variable.value !== null) {
-                STATE_CACHE.values[variable.name] = variable.value;
-            }
-        });
-    }
-    
-    restoreFromCache() {
-        // Restore all cached values to local state
-        Object.keys(STATE_CACHE.values).forEach(key => {
-            if (this.hasOwnProperty(key) || this[key] !== undefined) {
-                const value = STATE_CACHE.values[key];
-                if (typeof this[key] === 'boolean') {
-                    this[key] = value === true || value === 'true';
-                } else if (typeof this[key] === 'number') {
-                    this[key] = Number(value);
-                } else {
-                    this[key] = value;
-                }
+                this.setPropertyValue(variable.name, variable.value);
             }
         });
         
-        // Determine center type based on cached values
+        // Also load any cached local state from sessionStorage
+        this.loadLocalStateFromStorage();
+    }
+    
+    loadLocalStateFromStorage() {
+        try {
+            const stored = sessionStorage.getItem(this._cacheKey || STORAGE_KEY);
+            if (stored) {
+                this._localState = JSON.parse(stored);
+            }
+        } catch (e) {
+            console.warn('FlowMapCpe: Could not load from sessionStorage', e);
+        }
+    }
+    
+    saveLocalStateToStorage() {
+        try {
+            sessionStorage.setItem(this._cacheKey || STORAGE_KEY, JSON.stringify(this._localState));
+        } catch (e) {
+            console.warn('FlowMapCpe: Could not save to sessionStorage', e);
+        }
+    }
+    
+    applyLocalState() {
+        console.log('[FlowMapCpe] applyLocalState:', JSON.stringify(this._localState));
+        // Apply any local changes that haven't been saved by Flow yet
+        Object.keys(this._localState).forEach(key => {
+            this.setPropertyValue(key, this._localState[key]);
+        });
+        
+        // Determine center type
         if (this.centerLatitude || this.centerLongitude) {
             this.centerType = 'coordinates';
         } else if (this.centerCity || this.centerCountry || this.centerStreet) {
@@ -74,11 +97,42 @@ export default class FlowMapCpe extends LightningElement {
         }
     }
     
-    // Helper to update cache and dispatch to Flow
+    setPropertyValue(name, value) {
+        if (this[name] === undefined) return;
+        
+        if (typeof this[name] === 'boolean') {
+            this[name] = value === true || value === 'true';
+        } else if (typeof this[name] === 'number') {
+            this[name] = Number(value) || this[name];
+        } else {
+            this[name] = value;
+        }
+    }
+    
+    // Helper to update local state, storage, and dispatch to Flow
     updateValue(name, value, dataType = 'String') {
+        console.log('[FlowMapCpe] updateValue:', name, '=', value);
+        // Update component property
         this[name] = value;
-        STATE_CACHE.values[name] = value;
+        
+        // Track in local state
+        this._localState[name] = value;
+        
+        // Persist to sessionStorage
+        this.saveLocalStateToStorage();
+        
+        // Dispatch to Flow
         this.dispatchValueChange(name, value, dataType);
+    }
+    
+    // Clear local state when Flow successfully saves (called on successful save)
+    clearLocalState() {
+        this._localState = {};
+        try {
+            sessionStorage.removeItem(this._cacheKey || STORAGE_KEY);
+        } catch (e) {
+            // Ignore
+        }
     }
     
     @api genericTypeMappings;
