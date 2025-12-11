@@ -42,7 +42,8 @@ export default class FlowMapCpe extends LightningElement {
         drawing: false,
         geojson: false,
         headerUI: false,
-        listSearch: false
+        listSearch: false,
+        popupCustomization: false
     };
     
     @track centerType = 'auto';
@@ -132,6 +133,13 @@ export default class FlowMapCpe extends LightningElement {
     @track showFilterOption = false;
     @track filterFieldsJson = '';
     @track enableMarkerDrag = false;
+    @track listPosition = 'left';
+    @track listCollapsible = false;
+    @track popupTitleField = '';
+    @track popupDescriptionField = '';
+    @track popupAddressField = '';
+    @track popupCustomFieldsJson = '';
+    @track popupShowNavigateButton = false;
 
     // ============================================
     // WIRE: GET OBJECTS
@@ -174,7 +182,8 @@ export default class FlowMapCpe extends LightningElement {
             'customIconSvg', 'drawToolbarPosition', 'contentDocumentLinkedEntityId', 'contentDocumentId',
             'contentDocumentTitle', 'geoJsonValue', 'drawContentDocumentId', 'title', 'caption',
             'iconName', 'headerButtonsJson', 'listViewVisibility', 'searchPlaceholder', 'searchPosition',
-            'filterFieldsJson', 'disableClusteringAtZoom'
+            'filterFieldsJson', 'disableClusteringAtZoom', 'listPosition', 'popupTitleField', 
+            'popupDescriptionField', 'popupAddressField', 'popupCustomFieldsJson'
         ];
         
         stringProps.forEach(prop => {
@@ -199,7 +208,7 @@ export default class FlowMapCpe extends LightningElement {
             'displayCenterAsMarker', 'enableClustering', 'showCoverageOnHover', 'enableDrawing',
             'drawToolMarker', 'drawToolLine', 'drawToolPolygon', 'drawToolCircle', 'drawToolEdit',
             'drawToolDelete', 'saveAsContentDocument', 'autoSaveContentDocument', 'isJoined',
-            'isSearchable', 'showFilterOption', 'enableMarkerDrag'
+            'isSearchable', 'showFilterOption', 'enableMarkerDrag', 'listCollapsible', 'popupShowNavigateButton'
         ];
         
         boolProps.forEach(prop => {
@@ -392,6 +401,13 @@ export default class FlowMapCpe extends LightningElement {
     get listSearchSectionClass() {
         return this.expandedSections.listSearch ? 'section-content expanded' : 'section-content collapsed';
     }
+    
+    get popupCustomizationSectionIcon() {
+        return this.expandedSections.popupCustomization ? 'utility:chevrondown' : 'utility:chevronright';
+    }
+    get popupCustomizationSectionClass() {
+        return this.expandedSections.popupCustomization ? 'section-content expanded' : 'section-content collapsed';
+    }
 
     // ============================================
     // CONDITION GETTERS
@@ -509,6 +525,13 @@ export default class FlowMapCpe extends LightningElement {
             { label: 'Right', value: 'right' },
             { label: 'Center', value: 'center' },
             { label: 'Fill', value: 'fill' }
+        ];
+    }
+    
+    get listPositionOptions() {
+        return [
+            { label: 'Left', value: 'left' },
+            { label: 'Right', value: 'right' }
         ];
     }
 
@@ -851,6 +874,41 @@ export default class FlowMapCpe extends LightningElement {
     handleEnableMarkerDragChange(event) {
         this.enableMarkerDrag = event.target.checked;
         this.dispatchValueChange('enableMarkerDrag', this.enableMarkerDrag, 'Boolean');
+    }
+    
+    handleListPositionChange(event) {
+        this.listPosition = event.detail.value;
+        this.dispatchValueChange('listPosition', this.listPosition, 'String');
+    }
+    
+    handleListCollapsibleChange(event) {
+        this.listCollapsible = event.target.checked;
+        this.dispatchValueChange('listCollapsible', this.listCollapsible, 'Boolean');
+    }
+    
+    handlePopupTitleFieldChange(event) {
+        this.popupTitleField = event.detail.value;
+        this.dispatchValueChange('popupTitleField', this.popupTitleField, 'String');
+    }
+    
+    handlePopupDescriptionFieldChange(event) {
+        this.popupDescriptionField = event.detail.value;
+        this.dispatchValueChange('popupDescriptionField', this.popupDescriptionField, 'String');
+    }
+    
+    handlePopupAddressFieldChange(event) {
+        this.popupAddressField = event.detail.value;
+        this.dispatchValueChange('popupAddressField', this.popupAddressField, 'String');
+    }
+    
+    handlePopupCustomFieldsJsonChange(event) {
+        this.popupCustomFieldsJson = event.target.value;
+        this.dispatchValueChange('popupCustomFieldsJson', this.popupCustomFieldsJson, 'String');
+    }
+    
+    handlePopupShowNavigateButtonChange(event) {
+        this.popupShowNavigateButton = event.target.checked;
+        this.dispatchValueChange('popupShowNavigateButton', this.popupShowNavigateButton, 'Boolean');
     }
 
     // ============================================
