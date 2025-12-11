@@ -17,20 +17,15 @@ export default class FlowMapCpe extends LightningElement {
     }
     
     _inputVariables = [];
+    
     @api
     get inputVariables() {
         return this._inputVariables;
     }
     set inputVariables(value) {
         this._inputVariables = value || [];
-        // Only initialize once - prevents overwriting user changes on Flow re-render
-        if (!this._hasInitialized) {
-            this._hasInitialized = true;
-            this.initializeValues();
-        }
+        this.initializeValues();
     }
-    
-    _hasInitialized = false;
     
     @api genericTypeMappings;
     
@@ -893,27 +888,32 @@ export default class FlowMapCpe extends LightningElement {
     }
     
     handlePopupTitleFieldChange(event) {
-        this.popupTitleField = event.detail.value;
+        const value = event.detail ? event.detail.value : '';
+        this.popupTitleField = value || '';
         this.dispatchValueChange('popupTitleField', this.popupTitleField, 'String');
     }
     
     handlePopupDescriptionFieldChange(event) {
-        this.popupDescriptionField = event.detail.value;
+        const value = event.detail ? event.detail.value : '';
+        this.popupDescriptionField = value || '';
         this.dispatchValueChange('popupDescriptionField', this.popupDescriptionField, 'String');
     }
     
     handlePopupAddressFieldChange(event) {
-        this.popupAddressField = event.detail.value;
+        const value = event.detail ? event.detail.value : '';
+        this.popupAddressField = value || '';
         this.dispatchValueChange('popupAddressField', this.popupAddressField, 'String');
     }
     
     handlePopupCustomFieldsJsonChange(event) {
-        this.popupCustomFieldsJson = event.target.value;
+        const value = event.target ? event.target.value : '';
+        this.popupCustomFieldsJson = value || '';
         this.dispatchValueChange('popupCustomFieldsJson', this.popupCustomFieldsJson, 'String');
     }
     
     handlePopupShowNavigateButtonChange(event) {
-        this.popupShowNavigateButton = event.target.checked;
+        const value = event.target ? event.target.checked : false;
+        this.popupShowNavigateButton = value === true;
         this.dispatchValueChange('popupShowNavigateButton', this.popupShowNavigateButton, 'Boolean');
     }
 
