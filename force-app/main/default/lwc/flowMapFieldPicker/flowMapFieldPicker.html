@@ -28,7 +28,6 @@
                         onchange={handleInputChange}
                         onfocus={handleInputFocus}
                         disabled={disabled}
-                        readonly={false}
                     />
                     
                     <!-- Field type icon (when selected) -->
@@ -77,14 +76,14 @@
                             </template>
                             
                             <!-- No object selected -->
-                            <template lwc:elseif={!objectApiName}>
+                            <template lwc:elseif={noObjectSelected}>
                                 <li class="slds-listbox__item empty-item">
                                     <span>Select an object first</span>
                                 </li>
                             </template>
                             
                             <!-- No fields found -->
-                            <template lwc:elseif={!hasFields}>
+                            <template lwc:elseif={noFieldsFound}>
                                 <li class="slds-listbox__item empty-item">
                                     <span>No fields found</span>
                                 </li>
