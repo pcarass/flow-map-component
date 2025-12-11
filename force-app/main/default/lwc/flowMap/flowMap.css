@@ -1,245 +1,306 @@
-/* Main Container Styles */
-:host {
-    display: block;
-}
-
-/* Header Styles */
-.joined-header {
-    border-bottom: 1px solid #dddbda;
-    box-shadow: none;
-}
-
-/* Map Container */
+/* ============================================ */
+/* MAIN CONTAINER */
+/* ============================================ */
 .map-main-container {
-    position: relative;
+    display: flex;
     width: 100%;
-    min-height: 400px;
+    position: relative;
 }
 
 .map-main-container.with-list-view {
-    display: flex;
+    /* List view is visible */
 }
 
+.map-main-container.list-right {
+    flex-direction: row-reverse;
+}
+
+/* ============================================ */
+/* LIST VIEW CONTAINER */
+/* ============================================ */
+.list-view-container {
+    width: 280px;
+    min-width: 280px;
+    max-width: 280px;
+    background: #fff;
+    border-right: 1px solid #dddbda;
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+    transition: width 0.3s ease, min-width 0.3s ease, opacity 0.3s ease;
+}
+
+.list-right .list-view-container {
+    border-right: none;
+    border-left: 1px solid #dddbda;
+}
+
+.list-view-container.collapsed {
+    width: 0;
+    min-width: 0;
+    max-width: 0;
+    opacity: 0;
+    border: none;
+}
+
+/* ============================================ */
+/* LIST HEADER */
+/* ============================================ */
+.list-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 10px 12px;
+    background: #f3f3f3;
+    border-bottom: 1px solid #dddbda;
+    flex-shrink: 0;
+}
+
+.list-header-title {
+    font-weight: 600;
+    font-size: 13px;
+    color: #181818;
+}
+
+/* ============================================ */
+/* COLLAPSE TOGGLE BUTTON */
+/* ============================================ */
+.collapse-toggle-button {
+    position: absolute;
+    top: 50%;
+    transform: translateY(-50%);
+    left: 0;
+    z-index: 100;
+    width: 24px;
+    height: 48px;
+    background: #fff;
+    border: 1px solid #dddbda;
+    border-left: none;
+    border-radius: 0 4px 4px 0;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    box-shadow: 2px 0 4px rgba(0,0,0,0.1);
+    transition: background 0.2s;
+}
+
+.collapse-toggle-button:hover {
+    background: #f3f3f3;
+}
+
+.collapse-toggle-button.position-right {
+    left: auto;
+    right: 0;
+    border-left: 1px solid #dddbda;
+    border-right: none;
+    border-radius: 4px 0 0 4px;
+    box-shadow: -2px 0 4px rgba(0,0,0,0.1);
+}
+
+/* ============================================ */
+/* MARKER LIST */
+/* ============================================ */
+.marker-list {
+    flex: 1;
+    overflow-y: auto;
+    padding: 0;
+    margin: 0;
+    list-style: none;
+}
+
+.marker-list li {
+    cursor: pointer;
+    transition: background-color 0.2s;
+    padding: 10px 12px;
+    border-bottom: 1px solid #f0f0f0;
+}
+
+.marker-list li:hover {
+    background-color: #f3f3f3;
+}
+
+.marker-list li.selected {
+    background-color: #e5f2ff;
+    border-left: 3px solid #0176d3;
+}
+
+.marker-list .slds-tile {
+    padding: 0;
+}
+
+.marker-list .slds-tile__title {
+    font-size: 13px;
+    margin-bottom: 4px;
+}
+
+.marker-list .slds-tile__title a {
+    color: #0176d3;
+    text-decoration: none;
+}
+
+.marker-list .slds-tile__title a:hover {
+    text-decoration: underline;
+}
+
+.marker-list .slds-tile__detail {
+    margin-top: 2px;
+}
+
+.marker-list .slds-tile__detail p {
+    margin: 0;
+    line-height: 1.4;
+}
+
+/* ============================================ */
+/* MAP CONTAINER */
+/* ============================================ */
 .map-container {
     flex: 1;
-    min-height: 400px;
     position: relative;
+    min-height: 400px;
 }
 
 .google-map {
     height: 100%;
-    min-height: 400px;
+    width: 100%;
 }
 
 .leaflet-map-container {
     height: 100%;
-    min-height: 400px;
     width: 100%;
 }
 
-/* List View Styles */
-.list-view-container {
-    width: 300px;
-    min-width: 250px;
-    max-width: 350px;
-    border-right: 1px solid #dddbda;
-    overflow-y: auto;
-    max-height: 500px;
-    background-color: #fff;
+/* ============================================ */
+/* HEADER */
+/* ============================================ */
+.header-container {
+    padding: 12px 16px;
+    background: #fff;
+    border-bottom: 1px solid #dddbda;
 }
 
-.marker-list-item {
-    cursor: pointer;
-    transition: background-color 0.2s ease;
-    padding: 0.5rem;
+.header-container.is-joined {
+    border-radius: 4px 4px 0 0;
 }
 
-.marker-list-item:hover {
-    background-color: #f3f2f2;
-}
-
-.marker-list-item.selected {
-    background-color: #e5f2fd;
-    border-left: 3px solid #0070d2;
-}
-
-.marker-list-item .slds-tile__title a {
-    color: #0070d2;
-    text-decoration: none;
-}
-
-.marker-list-item .slds-tile__title a:hover {
-    text-decoration: underline;
-}
-
-/* Search Container */
 .search-container {
-    display: flex;
-    align-items: center;
+    min-width: 200px;
 }
 
 .search-container.slds-grow {
     flex: 1;
-    max-width: 400px;
 }
 
-/* Filter Popover */
+/* ============================================ */
+/* FILTER POPOVER */
+/* ============================================ */
 .filter-popover {
     position: absolute;
-    top: 60px;
-    right: 20px;
+    top: 48px;
+    right: 16px;
     z-index: 9999;
-    min-width: 300px;
 }
 
-/* Drawing Toolbar */
+/* ============================================ */
+/* DRAWING TOOLBAR */
+/* ============================================ */
 .drawing-toolbar {
     position: absolute;
     z-index: 1000;
-    background: white;
-    padding: 8px;
+    background: #fff;
     border-radius: 4px;
-    box-shadow: 0 2px 6px rgba(0, 0, 0, 0.2);
-}
-
-.drawing-toolbar.toolbar-top-left {
-    top: 10px;
-    left: 10px;
-}
-
-.drawing-toolbar.toolbar-top-right {
-    top: 10px;
-    right: 10px;
-}
-
-.drawing-toolbar.toolbar-bottom-left {
-    bottom: 10px;
-    left: 10px;
-}
-
-.drawing-toolbar.toolbar-bottom-right {
-    bottom: 10px;
-    right: 10px;
-}
-
-.tool-active {
-    background-color: #0070d2 !important;
-    color: white !important;
-}
-
-/* Custom Leaflet Marker Styles */
-.custom-div-icon {
-    background: transparent;
-    border: none;
-}
-
-.center-marker {
-    background: transparent;
-    border: none;
-}
-
-/* Marker Popup Styles */
-.marker-popup {
+    box-shadow: 0 2px 8px rgba(0,0,0,0.15);
     padding: 4px;
 }
 
-.marker-popup strong {
-    display: block;
-    margin-bottom: 4px;
-    font-size: 14px;
+.drawing-toolbar.position-topleft {
+    top: 10px;
+    left: 10px;
 }
 
-.marker-popup p {
-    margin: 2px 0;
-    font-size: 12px;
+.drawing-toolbar.position-topright {
+    top: 10px;
+    right: 10px;
 }
 
-.marker-popup .address {
-    color: #706e6b;
+.drawing-toolbar.position-bottomleft {
+    bottom: 10px;
+    left: 10px;
 }
 
-/* Loading State */
-.slds-align_absolute-center {
+.drawing-toolbar.position-bottomright {
+    bottom: 10px;
+    right: 10px;
+}
+
+.save-controls {
     display: flex;
-    justify-content: center;
     align-items: center;
-    height: 100%;
 }
 
-/* Responsive Adjustments */
+/* ============================================ */
+/* TOOL BUTTON STATES */
+/* ============================================ */
+.tool-active {
+    background-color: #0176d3 !important;
+    color: white !important;
+}
+
+/* ============================================ */
+/* RESPONSIVE */
+/* ============================================ */
 @media (max-width: 768px) {
-    .map-main-container.with-list-view {
+    .map-main-container {
+        flex-direction: column;
+    }
+    
+    .map-main-container.list-right {
         flex-direction: column;
     }
     
     .list-view-container {
-        width: 100%;
-        max-width: none;
+        width: 100% !important;
+        max-width: 100% !important;
+        min-width: 100% !important;
         max-height: 200px;
         border-right: none;
         border-bottom: 1px solid #dddbda;
     }
     
-    .filter-popover {
-        left: 10px;
-        right: 10px;
-        min-width: auto;
+    .list-view-container.collapsed {
+        max-height: 0;
+        border-bottom: none;
+    }
+    
+    .collapse-toggle-button {
+        top: auto;
+        bottom: 0;
+        left: 50%;
+        transform: translateX(-50%);
+        width: 48px;
+        height: 24px;
+        border-radius: 4px 4px 0 0;
+        border-bottom: none;
     }
 }
 
-/* Cluster Marker Styles (for Leaflet Marker Cluster) */
-.marker-cluster-small {
-    background-color: rgba(181, 226, 140, 0.6);
-}
-
-.marker-cluster-small div {
-    background-color: rgba(110, 204, 57, 0.6);
-}
-
-.marker-cluster-medium {
-    background-color: rgba(241, 211, 87, 0.6);
-}
-
-.marker-cluster-medium div {
-    background-color: rgba(240, 194, 12, 0.6);
-}
-
-.marker-cluster-large {
-    background-color: rgba(253, 156, 115, 0.6);
-}
-
-.marker-cluster-large div {
-    background-color: rgba(241, 128, 23, 0.6);
-}
-
-.marker-cluster {
-    background-clip: padding-box;
-    border-radius: 20px;
-}
-
-.marker-cluster div {
-    width: 30px;
-    height: 30px;
-    margin-left: 5px;
-    margin-top: 5px;
-    text-align: center;
-    border-radius: 15px;
-    font: 12px "Salesforce Sans", Arial, sans-serif;
-    font-weight: bold;
-    color: #333;
-}
-
-.marker-cluster span {
-    line-height: 30px;
-}
-
-/* GeoJSON Layer Styles */
-.leaflet-interactive {
-    cursor: pointer;
-}
-
-/* Error Display */
-.slds-notify_alert {
+/* ============================================ */
+/* LOADING STATES */
+/* ============================================ */
+.loading-container {
     display: flex;
     align-items: center;
+    justify-content: center;
+    height: 100%;
+    min-height: 200px;
+}
+
+/* ============================================ */
+/* NO RESULTS */
+/* ============================================ */
+.no-results {
+    text-align: center;
+    padding: 24px;
+    color: #706e6b;
 }
