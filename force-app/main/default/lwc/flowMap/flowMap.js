@@ -210,6 +210,14 @@ export default class FlowMap extends LightningElement {
         return this.filteredMarkers.length > 1;
     }
     
+    // When our custom list is shown, hide lightning-map's built-in list
+    get googleMapsListView() {
+        if (this.showListView) {
+            return 'hidden';
+        }
+        return this.listViewVisibility;
+    }
+    
     get searchContainerClasses() {
         let classes = 'search-container';
         if (this.searchPosition === 'fill') {
@@ -873,28 +881,36 @@ export default class FlowMap extends LightningElement {
     }
     
     selectMarker(index, markerId) {
+        // Prevent re-selection of same marker (avoids unnecessary re-renders)
+        if (this.selectedMarkerIndex === index) {
+            return;
+        }
+        
         this.selectedMarkerIndex = index;
         const marker = this.filteredMarkers[index];
         
         if (marker) {
-            // Update output attributes
+            // Update output attributes locally first
             this.selectedMarkerId = marker.id;
             this.selectedMarkerTitle = marker.title;
             this.selectedMarkerLatitude = marker.latitude;
             this.selectedMarkerLongitude = marker.longitude;
             this.selectedMarkerData = JSON.stringify(marker.rawData);
             
-            // Dispatch Flow attribute changes
-            this.dispatchFlowAttributeChange('selectedMarkerId', marker.id);
-            this.dispatchFlowAttributeChange('selectedMarkerTitle', marker.title);
-            this.dispatchFlowAttributeChange('selectedMarkerLatitude', marker.latitude);
-            this.dispatchFlowAttributeChange('selectedMarkerLongitude', marker.longitude);
-            this.dispatchFlowAttributeChange('selectedMarkerData', JSON.stringify(marker.rawData));
-            
-            // Update list styling
+            // Update list styling immediately
             this.applyMarkerListClasses();
             
-            // Center map on selected marker
+            // Batch dispatch Flow attribute changes to prevent multiple re-renders
+            // Using Promise.resolve() to batch into single microtask
+            Promise.resolve().then(() => {
+                this.dispatchFlowAttributeChange('selectedMarkerId', marker.id);
+                this.dispatchFlowAttributeChange('selectedMarkerTitle', marker.title);
+                this.dispatchFlowAttributeChange('selectedMarkerLatitude', marker.latitude);
+                this.dispatchFlowAttributeChange('selectedMarkerLongitude', marker.longitude);
+                this.dispatchFlowAttributeChange('selectedMarkerData', JSON.stringify(marker.rawData));
+            });
+            
+            // Center map on selected marker (Leaflet only - Google Maps handles this automatically)
             if (this.useLeafletMaps && this.leafletMap && marker.latitude && marker.longitude) {
                 this.leafletMap.setView([marker.latitude, marker.longitude], this.zoomLevel);
             }
