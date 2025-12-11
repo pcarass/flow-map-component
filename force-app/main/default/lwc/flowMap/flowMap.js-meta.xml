@@ -172,6 +172,25 @@
             <property name="listViewVisibility" type="String" label="List View" default="auto" 
                       datasource="visible,hidden,auto"
                       description="Show location list: visible (always), hidden (never), auto (when multiple markers)"/>
+            <property name="listPosition" type="String" label="List Position" default="left"
+                      datasource="left,right"
+                      description="Position of the list panel: left or right side of map"/>
+            <property name="listCollapsible" type="Boolean" label="List Collapsible" default="false" 
+                      description="Allow users to collapse and expand the list panel"/>
+            
+            <!-- ============================================ -->
+            <!-- POPUP CUSTOMIZATION -->
+            <!-- ============================================ -->
+            <property name="popupTitleField" type="String" label="Popup Title Field" 
+                      description="Field to display as marker popup title (defaults to Title Field if not set)"/>
+            <property name="popupDescriptionField" type="String" label="Popup Description Field" 
+                      description="Field to display in marker popup description"/>
+            <property name="popupAddressField" type="String" label="Popup Address Field" 
+                      description="Field to display as address in marker popup"/>
+            <property name="popupCustomFieldsJson" type="String" label="Popup Custom Fields (JSON)" 
+                      description="JSON array of custom fields to show in popup: [{&quot;label&quot;: &quot;Phone&quot;, &quot;field&quot;: &quot;Phone&quot;}]"/>
+            <property name="popupShowNavigateButton" type="Boolean" label="Show Navigate Button" default="false" 
+                      description="Show a button in popup to open directions in Google Maps"/>
             
             <!-- ============================================ -->
             <!-- SEARCH CONFIGURATION -->
