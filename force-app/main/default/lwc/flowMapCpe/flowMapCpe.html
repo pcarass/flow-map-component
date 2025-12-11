@@ -666,65 +666,8 @@
                 </div>
             </div>
             
-            <!-- SECTION: POPUP CUSTOMIZATION -->
-            <template lwc:if={isQueryMode}>
-                <div class="cpe-section">
-                    <div class="section-header" data-section="popupCustomization" onclick={toggleSection}>
-                        <lightning-icon icon-name="utility:info" size="small" class="section-icon"></lightning-icon>
-                        <span class="section-title">Marker Popup</span>
-                        <lightning-icon icon-name={popupCustomizationSectionIcon} size="x-small" class="chevron"></lightning-icon>
-                    </div>
-                    <div class={popupCustomizationSectionClass}>
-                        <div class="info-box">
-                            <lightning-icon icon-name="utility:info" size="x-small"></lightning-icon>
-                            <span>Customize what appears when clicking a marker. Leave blank to use default Title/Description fields.</span>
-                        </div>
-                        
-                        <c-flow-map-field-picker
-                            label="Popup Title"
-                            object-api-name={objectApiName}
-                            value={popupTitleField}
-                            field-category="text"
-                            help-text="Field to show as popup header"
-                            onchange={handlePopupTitleFieldChange}>
-                        </c-flow-map-field-picker>
-                        
-                        <c-flow-map-field-picker
-                            label="Popup Description"
-                            object-api-name={objectApiName}
-                            value={popupDescriptionField}
-                            field-category="text"
-                            help-text="Field to show as popup body text"
-                            onchange={handlePopupDescriptionFieldChange}>
-                        </c-flow-map-field-picker>
-                        
-                        <c-flow-map-field-picker
-                            label="Popup Address"
-                            object-api-name={objectApiName}
-                            value={popupAddressField}
-                            field-category="address"
-                            help-text="Address field to show in popup"
-                            onchange={handlePopupAddressFieldChange}>
-                        </c-flow-map-field-picker>
-                        
-                        <lightning-textarea 
-                            label="Custom Fields (JSON)" 
-                            value={popupCustomFieldsJson}
-                            placeholder="See help text for format"
-                            field-level-help="JSON array of additional fields to display"
-                            onchange={handlePopupCustomFieldsJsonChange}>
-                        </lightning-textarea>
-                        
-                        <lightning-input 
-                            type="toggle" 
-                            label="Show Navigate Button" 
-                            checked={popupShowNavigateButton}
-                            field-level-help="Show a button to open directions in Google Maps"
-                            onchange={handlePopupShowNavigateButtonChange}>
-                        </lightning-input>
-                    </div>
-                </div>
-            </template>
+            
+            
 
         </div>
     </div>
