@@ -99,19 +99,20 @@
 
 .map-type-card:hover {
     border-color: #0176d3;
-    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+    background: #f0f8ff;
 }
 
 .map-type-card.selected {
     border-color: #0176d3;
-    background: #f0f8ff;
+    background: #e5f2ff;
+    box-shadow: 0 0 0 1px #0176d3;
 }
 
 .map-type-icon {
-    margin-bottom: 12px;
+    margin-bottom: 8px;
 }
 
-.map-type-label {
+.map-type-name {
     font-weight: 600;
     font-size: 14px;
     color: #181818;
@@ -125,56 +126,94 @@
 }
 
 /* ============================================ */
-/* SOURCE TYPE SELECTOR */
+/* SOURCE TYPE BUTTON GROUP */
 /* ============================================ */
-.source-type-selector {
+.source-type-group {
+    display: flex;
     margin-bottom: 16px;
+    border: 1px solid #dddbda;
+    border-radius: 4px;
+    overflow: hidden;
+}
+
+.source-button {
+    flex: 1;
+    padding: 10px 16px;
+    border: none;
+    background: #fff;
+    color: #181818;
+    font-size: 13px;
+    font-weight: 500;
+    cursor: pointer;
+    transition: all 0.2s;
+    border-right: 1px solid #dddbda;
+}
+
+.source-button:last-child {
+    border-right: none;
+}
+
+.source-button:hover {
+    background: #f3f3f3;
+}
+
+.source-button.selected {
+    background: #0176d3;
+    color: #fff;
+    font-weight: 600;
+}
+
+.source-button.selected:hover {
+    background: #014486;
 }
 
 /* ============================================ */
-/* FIELD GROUPS */
+/* CENTER TYPE BUTTONS */
+/* ============================================ */
+.center-type-group {
+    display: flex;
+    margin-bottom: 16px;
+    border: 1px solid #dddbda;
+    border-radius: 4px;
+    overflow: hidden;
+}
+
+/* ============================================ */
+/* FORM FIELDS */
 /* ============================================ */
 .field-group {
-    margin-top: 16px;
+    margin-bottom: 16px;
 }
 
 .field-row {
     display: flex;
-    gap: 12px;
-    margin-bottom: 12px;
+    gap: 16px;
+    margin-bottom: 16px;
 }
 
 .field-row > * {
     flex: 1;
 }
 
-/* ============================================ */
-/* SUBSECTIONS */
-/* ============================================ */
-.subsection {
-    margin-top: 20px;
-    padding-top: 16px;
-    border-top: 1px solid #e5e5e5;
-}
-
-.subsection:first-child {
-    margin-top: 0;
-    padding-top: 0;
-    border-top: none;
+.field-label {
+    font-size: 12px;
+    font-weight: 600;
+    color: #444;
+    margin-bottom: 4px;
+    display: block;
 }
 
 .subsection-title {
-    font-weight: 600;
     font-size: 13px;
-    color: #3e3e3c;
-    margin-bottom: 12px;
+    font-weight: 700;
+    color: #181818;
+    margin: 20px 0 12px 0;
+    padding-bottom: 8px;
+    border-bottom: 1px solid #e5e5e5;
     text-transform: uppercase;
     letter-spacing: 0.5px;
 }
 
-/* ============================================ */
-/* HELP TEXT & INFO BOX */
-/* ============================================ */
 .help-text {
     display: flex;
     align-items: flex-start;
@@ -185,37 +224,7 @@
     border-radius: 4px;
     font-size: 12px;
     color: #706e6b;
-}
-
-.info-box {
-    display: flex;
-    align-items: center;
-    gap: 8px;
-    padding: 12px 16px;
-    background: #e6f7ff;
-    border: 1px solid #91d5ff;
-    border-radius: 4px;
-    font-size: 13px;
-    color: #0176d3;
-}
-
-/* ============================================ */
-/* CENTER TYPE TOGGLE */
-/* ============================================ */
-.center-type-toggle {
-    margin-bottom: 16px;
-}
-
-/* ============================================ */
-/* ZOOM LABELS */
-/* ============================================ */
-.zoom-labels {
-    display: flex;
-    justify-content: space-between;
-    font-size: 11px;
-    color: #706e6b;
-    margin-top: 4px;
-    padding: 0 4px;
+    line-height: 1.4;
 }
 
 /* ============================================ */
@@ -225,17 +234,14 @@
     display: flex;
     gap: 12px;
     margin-bottom: 20px;
-    flex-wrap: wrap;
 }
 
 .marker-type-option {
     flex: 1;
-    min-width: 80px;
-    max-width: 100px;
-    border: 2px solid #dddbda;
-    border-radius: 8px;
-    padding: 12px 8px;
     text-align: center;
+    padding: 12px 8px;
+    border: 2px solid #dddbda;
+    border-radius: 6px;
     cursor: pointer;
     transition: all 0.2s;
     background: #fff;
@@ -243,11 +249,12 @@
 
 .marker-type-option:hover {
     border-color: #0176d3;
+    background: #f0f8ff;
 }
 
 .marker-type-option.selected {
     border-color: #0176d3;
-    background: #f0f8ff;
+    background: #e5f2ff;
 }
 
 .marker-type-preview {
@@ -255,12 +262,17 @@
     display: flex;
     align-items: center;
     justify-content: center;
-    margin-bottom: 8px;
+    margin-bottom: 6px;
+}
+
+.marker-type-preview svg {
+    width: 32px;
+    height: 32px;
 }
 
 .marker-type-name {
     font-size: 11px;
-    font-weight: 600;
+    font-weight: 500;
     color: #181818;
 }
 
@@ -279,9 +291,9 @@
 
 .color-input label {
     display: block;
-    font-size: 13px;
-    font-weight: 400;
-    color: #3e3e3c;
+    font-size: 12px;
+    font-weight: 600;
+    color: #444;
     margin-bottom: 6px;
 }
 
@@ -292,75 +304,100 @@
 }
 
 .color-picker-wrapper input[type="color"] {
-    width: 40px;
-    height: 40px;
+    width: 44px;
+    height: 36px;
     border: 1px solid #dddbda;
     border-radius: 4px;
-    padding: 2px;
     cursor: pointer;
-    background: none;
-}
-
-.color-picker-wrapper input[type="color"]::-webkit-color-swatch-wrapper {
     padding: 2px;
 }
 
-.color-picker-wrapper input[type="color"]::-webkit-color-swatch {
-    border-radius: 2px;
-    border: none;
-}
-
-.color-picker-wrapper lightning-input {
-    flex: 1;
-}
-
 /* ============================================ */
-/* CLUSTERING OPTIONS */
+/* DRAWING TOOLS GRID */
 /* ============================================ */
-.clustering-options {
-    margin-top: 16px;
-    padding: 16px;
-    background: #f9f9f9;
-    border-radius: 4px;
-}
-
-/* ============================================ */
-/* TOOL GRID */
-/* ============================================ */
-.tool-grid {
+.drawing-tools-grid {
     display: grid;
     grid-template-columns: repeat(3, 1fr);
     gap: 8px;
     margin-bottom: 16px;
 }
 
-/* ============================================ */
-/* LIGHTNING COMPONENT OVERRIDES */
-/* ============================================ */
-lightning-input,
-lightning-textarea,
-lightning-combobox,
-lightning-slider {
-    margin-bottom: 12px;
-}
-
-lightning-button-group {
+.tool-checkbox {
     display: flex;
+    align-items: center;
+    gap: 6px;
+    padding: 8px;
+    border: 1px solid #e5e5e5;
+    border-radius: 4px;
+    background: #fafafa;
+    font-size: 12px;
 }
 
-/* Override button group styling */
-.slds-button-group lightning-button {
-    margin: 0;
+/* ============================================ */
+/* ZOOM SLIDER */
+/* ============================================ */
+.zoom-control {
+    margin-bottom: 16px;
 }
 
-/* Responsive adjustments */
-@media (max-width: 600px) {
+.zoom-labels {
+    display: flex;
+    justify-content: space-between;
+    font-size: 10px;
+    color: #706e6b;
+    margin-top: 4px;
+}
+
+.zoom-value {
+    text-align: center;
+    font-weight: 600;
+    color: #0176d3;
+    font-size: 14px;
+    margin-top: 4px;
+}
+
+/* ============================================ */
+/* TOGGLE SWITCHES */
+/* ============================================ */
+.toggle-row {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 8px 0;
+    border-bottom: 1px solid #f0f0f0;
+}
+
+.toggle-row:last-child {
+    border-bottom: none;
+}
+
+.toggle-label {
+    font-size: 13px;
+    color: #181818;
+}
+
+/* ============================================ */
+/* SAVE OPTIONS */
+/* ============================================ */
+.save-options {
+    background: #f9f9f9;
+    border: 1px solid #e5e5e5;
+    border-radius: 4px;
+    padding: 12px;
+    margin-top: 12px;
+}
+
+/* ============================================ */
+/* RESPONSIVE ADJUSTMENTS */
+/* ============================================ */
+@media (max-width: 400px) {
     .map-type-selector {
         flex-direction: column;
     }
     
     .field-row {
         flex-direction: column;
+        gap: 12px;
     }
     
     .color-row {
@@ -368,48 +405,14 @@ lightning-button-group {
     }
     
     .marker-type-selector {
-        justify-content: center;
+        flex-wrap: wrap;
     }
     
-    .tool-grid {
+    .marker-type-option {
+        min-width: 70px;
+    }
+    
+    .drawing-tools-grid {
         grid-template-columns: repeat(2, 1fr);
     }
-}
-
-/* ============================================ */
-/* ANIMATION */
-/* ============================================ */
-.section-content {
-    transition: all 0.2s ease-out;
-}
-
-.map-type-card,
-.marker-type-option {
-    transition: all 0.15s ease-out;
-}
-
-.map-type-card:active,
-.marker-type-option:active {
-    transform: scale(0.98);
-}
-
-/* ============================================ */
-/* SCROLLBAR STYLING */
-/* ============================================ */
-.cpe-container::-webkit-scrollbar {
-    width: 6px;
-}
-
-.cpe-container::-webkit-scrollbar-track {
-    background: #f1f1f1;
-    border-radius: 3px;
-}
-
-.cpe-container::-webkit-scrollbar-thumb {
-    background: #c1c1c1;
-    border-radius: 3px;
-}
-
-.cpe-container::-webkit-scrollbar-thumb:hover {
-    background: #a1a1a1;
 }
