@@ -149,12 +149,6 @@ export default class FlowMap extends LightningElement {
     @track isFilterOpen = false;
     @track filterValues = {};
     @track selectedMarkerIndex = -1;
-    _flowUpdateTimeout = null;
-    _selectedMarkerId = null;
-    _selectedMarkerTitle = null;
-    _selectedMarkerLatitude = null;
-    _selectedMarkerLongitude = null;
-    _selectedMarkerData = null;
     @track isListCollapsed = false;
     // @track dynamicMapCenter removed - using selected-marker-value for navigation
     @track drawingMode = null; // 'marker', 'line', 'polygon', 'circle', 'edit', 'delete'
@@ -964,7 +958,7 @@ export default class FlowMap extends LightningElement {
     }
     
     selectMarker(index, markerId) {
-        // Prevent re-selection of same marker (avoids unnecessary work)
+        // Prevent re-selection of same marker
         if (this.selectedMarkerIndex === index) {
             return;
         }
@@ -973,12 +967,13 @@ export default class FlowMap extends LightningElement {
         const marker = this.filteredMarkers[index];
         
         if (marker) {
-            // Update local state for immediate UI feedback
-            this._selectedMarkerId = marker.id;
-            this._selectedMarkerTitle = marker.title;
-            this._selectedMarkerLatitude = marker.latitude;
-            this._selectedMarkerLongitude = marker.longitude;
-            this._selectedMarkerData = JSON.stringify(marker.rawData);
+            // Update @api properties directly - Flow can read these when needed
+            // We do NOT dispatch FlowAttributeChangeEvent as it causes component re-renders
+            this.selectedMarkerId = marker.id;
+            this.selectedMarkerTitle = marker.title;
+            this.selectedMarkerLatitude = marker.latitude;
+            this.selectedMarkerLongitude = marker.longitude;
+            this.selectedMarkerData = JSON.stringify(marker.rawData);
             
             // Update list styling immediately
             this.applyMarkerListClasses();
@@ -988,21 +983,10 @@ export default class FlowMap extends LightningElement {
                 this.leafletMap.setView([marker.latitude, marker.longitude], this.zoomLevel);
             }
             
-            // Dispatch custom event for parent components
+            // Dispatch custom event for parent components (not Flow)
             this.dispatchEvent(new CustomEvent('markerselect', {
                 detail: { marker: marker }
             }));
-            
-            // Debounce Flow attribute updates to prevent excessive re-renders
-            // Only dispatch after user has stopped clicking for 500ms
-            clearTimeout(this._flowUpdateTimeout);
-            this._flowUpdateTimeout = setTimeout(() => {
-                this.dispatchFlowAttributeChange('selectedMarkerId', this._selectedMarkerId);
-                this.dispatchFlowAttributeChange('selectedMarkerTitle', this._selectedMarkerTitle);
-                this.dispatchFlowAttributeChange('selectedMarkerLatitude', this._selectedMarkerLatitude);
-                this.dispatchFlowAttributeChange('selectedMarkerLongitude', this._selectedMarkerLongitude);
-                this.dispatchFlowAttributeChange('selectedMarkerData', this._selectedMarkerData);
-            }, 500);
         }
     }
     
