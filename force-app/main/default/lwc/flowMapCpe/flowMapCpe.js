@@ -7,7 +7,7 @@ export default class FlowMapCpe extends LightningElement {
     // FLOW BUILDER CONTEXT
     // ============================================
     
-    _initTimeout = null;
+    _initialized = false;
     _builderContext;
     @api 
     get builderContext() {
@@ -24,13 +24,12 @@ export default class FlowMapCpe extends LightningElement {
     }
     set inputVariables(value) {
         this._inputVariables = value || [];
-        // Debounce initialization to prevent multiple calls during Flow render
-        if (this._initTimeout) {
-            clearTimeout(this._initTimeout);
-        }
-        this._initTimeout = setTimeout(() => {
+        // CRITICAL: Only initialize ONCE on first load
+        // After that, local state is the source of truth
+        if (!this._initialized) {
+            this._initialized = true;
             this.initializeValues();
-        }, 0);
+        }
     }
     
     @api genericTypeMappings;
