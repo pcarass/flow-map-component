@@ -1,3 +1,415 @@
-:host {
+/* ============================================ */
+/* CPE CONTAINER */
+/* ============================================ */
+.cpe-container {
+    font-family: 'Salesforce Sans', Arial, sans-serif;
+    padding: 0;
+    max-height: 100%;
+    overflow-y: auto;
+}
+
+/* ============================================ */
+/* SECTION STYLING */
+/* ============================================ */
+.cpe-section {
+    border: 1px solid #dddbda;
+    border-radius: 4px;
+    margin-bottom: 12px;
+    background: #fff;
+    overflow: hidden;
+}
+
+.section-header {
+    display: flex;
+    align-items: center;
+    padding: 12px 16px;
+    background: #f3f3f3;
+    cursor: pointer;
+    user-select: none;
+    transition: background-color 0.2s;
+}
+
+.section-header:hover {
+    background: #e5e5e5;
+}
+
+.section-icon {
+    margin-right: 10px;
+    color: #706e6b;
+}
+
+.section-title {
+    flex: 1;
+    font-weight: 600;
+    font-size: 14px;
+    color: #181818;
+}
+
+.chevron {
+    color: #706e6b;
+    transition: transform 0.2s;
+}
+
+.section-content {
+    padding: 16px;
+    border-top: 1px solid #dddbda;
+}
+
+.section-content.collapsed {
+    display: none;
+}
+
+.section-content.expanded {
     display: block;
+}
+
+/* ============================================ */
+/* LEAFLET BADGE */
+/* ============================================ */
+.leaflet-badge {
+    background: #3d9970;
+    color: white;
+    font-size: 10px;
+    font-weight: 600;
+    padding: 2px 8px;
+    border-radius: 10px;
+    margin-left: 8px;
+    text-transform: uppercase;
+}
+
+/* ============================================ */
+/* MAP TYPE SELECTOR */
+/* ============================================ */
+.map-type-selector {
+    display: flex;
+    gap: 16px;
+    margin-bottom: 20px;
+}
+
+.map-type-card {
+    flex: 1;
+    border: 2px solid #dddbda;
+    border-radius: 8px;
+    padding: 20px;
+    text-align: center;
+    cursor: pointer;
+    transition: all 0.2s;
+    background: #fff;
+}
+
+.map-type-card:hover {
+    border-color: #0176d3;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+}
+
+.map-type-card.selected {
+    border-color: #0176d3;
+    background: #f0f8ff;
+}
+
+.map-type-icon {
+    margin-bottom: 12px;
+}
+
+.map-type-label {
+    font-weight: 600;
+    font-size: 14px;
+    color: #181818;
+    margin-bottom: 4px;
+}
+
+.map-type-desc {
+    font-size: 12px;
+    color: #706e6b;
+    line-height: 1.4;
+}
+
+/* ============================================ */
+/* SOURCE TYPE SELECTOR */
+/* ============================================ */
+.source-type-selector {
+    margin-bottom: 16px;
+}
+
+/* ============================================ */
+/* FIELD GROUPS */
+/* ============================================ */
+.field-group {
+    margin-top: 16px;
+}
+
+.field-row {
+    display: flex;
+    gap: 12px;
+    margin-bottom: 12px;
+}
+
+.field-row > * {
+    flex: 1;
+}
+
+/* ============================================ */
+/* SUBSECTIONS */
+/* ============================================ */
+.subsection {
+    margin-top: 20px;
+    padding-top: 16px;
+    border-top: 1px solid #e5e5e5;
+}
+
+.subsection:first-child {
+    margin-top: 0;
+    padding-top: 0;
+    border-top: none;
+}
+
+.subsection-title {
+    font-weight: 600;
+    font-size: 13px;
+    color: #3e3e3c;
+    margin-bottom: 12px;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+}
+
+/* ============================================ */
+/* HELP TEXT & INFO BOX */
+/* ============================================ */
+.help-text {
+    display: flex;
+    align-items: flex-start;
+    gap: 6px;
+    margin-top: 8px;
+    padding: 8px 12px;
+    background: #f3f3f3;
+    border-radius: 4px;
+    font-size: 12px;
+    color: #706e6b;
+}
+
+.info-box {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 12px 16px;
+    background: #e6f7ff;
+    border: 1px solid #91d5ff;
+    border-radius: 4px;
+    font-size: 13px;
+    color: #0176d3;
+}
+
+/* ============================================ */
+/* CENTER TYPE TOGGLE */
+/* ============================================ */
+.center-type-toggle {
+    margin-bottom: 16px;
+}
+
+/* ============================================ */
+/* ZOOM LABELS */
+/* ============================================ */
+.zoom-labels {
+    display: flex;
+    justify-content: space-between;
+    font-size: 11px;
+    color: #706e6b;
+    margin-top: 4px;
+    padding: 0 4px;
+}
+
+/* ============================================ */
+/* MARKER TYPE SELECTOR */
+/* ============================================ */
+.marker-type-selector {
+    display: flex;
+    gap: 12px;
+    margin-bottom: 20px;
+    flex-wrap: wrap;
+}
+
+.marker-type-option {
+    flex: 1;
+    min-width: 80px;
+    max-width: 100px;
+    border: 2px solid #dddbda;
+    border-radius: 8px;
+    padding: 12px 8px;
+    text-align: center;
+    cursor: pointer;
+    transition: all 0.2s;
+    background: #fff;
+}
+
+.marker-type-option:hover {
+    border-color: #0176d3;
+}
+
+.marker-type-option.selected {
+    border-color: #0176d3;
+    background: #f0f8ff;
+}
+
+.marker-type-preview {
+    height: 40px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin-bottom: 8px;
+}
+
+.marker-type-name {
+    font-size: 11px;
+    font-weight: 600;
+    color: #181818;
+}
+
+/* ============================================ */
+/* COLOR PICKER */
+/* ============================================ */
+.color-row {
+    display: flex;
+    gap: 16px;
+    margin-bottom: 16px;
+}
+
+.color-input {
+    flex: 1;
+}
+
+.color-input label {
+    display: block;
+    font-size: 13px;
+    font-weight: 400;
+    color: #3e3e3c;
+    margin-bottom: 6px;
+}
+
+.color-picker-wrapper {
+    display: flex;
+    gap: 8px;
+    align-items: center;
+}
+
+.color-picker-wrapper input[type="color"] {
+    width: 40px;
+    height: 40px;
+    border: 1px solid #dddbda;
+    border-radius: 4px;
+    padding: 2px;
+    cursor: pointer;
+    background: none;
+}
+
+.color-picker-wrapper input[type="color"]::-webkit-color-swatch-wrapper {
+    padding: 2px;
+}
+
+.color-picker-wrapper input[type="color"]::-webkit-color-swatch {
+    border-radius: 2px;
+    border: none;
+}
+
+.color-picker-wrapper lightning-input {
+    flex: 1;
+}
+
+/* ============================================ */
+/* CLUSTERING OPTIONS */
+/* ============================================ */
+.clustering-options {
+    margin-top: 16px;
+    padding: 16px;
+    background: #f9f9f9;
+    border-radius: 4px;
+}
+
+/* ============================================ */
+/* TOOL GRID */
+/* ============================================ */
+.tool-grid {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 8px;
+    margin-bottom: 16px;
+}
+
+/* ============================================ */
+/* LIGHTNING COMPONENT OVERRIDES */
+/* ============================================ */
+lightning-input,
+lightning-textarea,
+lightning-combobox,
+lightning-slider {
+    margin-bottom: 12px;
+}
+
+lightning-button-group {
+    display: flex;
+}
+
+/* Override button group styling */
+.slds-button-group lightning-button {
+    margin: 0;
+}
+
+/* Responsive adjustments */
+@media (max-width: 600px) {
+    .map-type-selector {
+        flex-direction: column;
+    }
+    
+    .field-row {
+        flex-direction: column;
+    }
+    
+    .color-row {
+        flex-direction: column;
+    }
+    
+    .marker-type-selector {
+        justify-content: center;
+    }
+    
+    .tool-grid {
+        grid-template-columns: repeat(2, 1fr);
+    }
+}
+
+/* ============================================ */
+/* ANIMATION */
+/* ============================================ */
+.section-content {
+    transition: all 0.2s ease-out;
+}
+
+.map-type-card,
+.marker-type-option {
+    transition: all 0.15s ease-out;
+}
+
+.map-type-card:active,
+.marker-type-option:active {
+    transform: scale(0.98);
+}
+
+/* ============================================ */
+/* SCROLLBAR STYLING */
+/* ============================================ */
+.cpe-container::-webkit-scrollbar {
+    width: 6px;
+}
+
+.cpe-container::-webkit-scrollbar-track {
+    background: #f1f1f1;
+    border-radius: 3px;
+}
+
+.cpe-container::-webkit-scrollbar-thumb {
+    background: #c1c1c1;
+    border-radius: 3px;
+}
+
+.cpe-container::-webkit-scrollbar-thumb:hover {
+    background: #a1a1a1;
 }
