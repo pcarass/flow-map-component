@@ -1,20 +1,20 @@
 import { LightningElement, api, track } from 'lwc';
+import getObjectFields from '@salesforce/apex/FlowMapController.getObjectFields';
+import getSObjects from '@salesforce/apex/FlowMapController.getSObjects';
 
+/**
+ * Custom Property Editor for Flow Map Component
+ * Following Salesforce CPE best practices from:
+ * https://developer.salesforce.com/docs/platform/lwc/guide/use-flow-custom-property-editor-interface.html
+ */
 export default class FlowMapCpe extends LightningElement {
     // ============================================
-    // FLOW BUILDER CONTEXT
+    // FLOW BUILDER INTERFACE PROPERTIES
     // ============================================
     
-    _builderContext;
-    @api 
-    get builderContext() {
-        return this._builderContext;
-    }
-    set builderContext(value) {
-        this._builderContext = value;
-    }
-    
     _inputVariables = [];
+    _builderContext = {};
+    
     @api
     get inputVariables() {
         return this._inputVariables;
@@ -24,40 +24,36 @@ export default class FlowMapCpe extends LightningElement {
         this.initializeValues();
     }
     
-    // Generic type descriptors (required by Flow Builder)
-    @api genericTypeMappings;
+    @api
+    get builderContext() {
+        return this._builderContext;
+    }
+    set builderContext(value) {
+        this._builderContext = value || {};
+    }
     
     // ============================================
-    // SECTION COLLAPSE STATE
+    // COMPONENT STATE
     // ============================================
     
-    @track expandedSections = {
-        mapType: true,
-        dataSource: true,
-        fieldMappings: false,
-        mapCenter: false,
-        markerStyle: false,
-        clustering: false,
-        drawing: false,
-        geojson: false,
-        headerUI: false,
-        listSearch: false
-    };
-    
-    // Center type selection
-    @track centerType = 'auto';
-    
-    // ============================================
-    // ALL PROPERTY VALUES
-    // ============================================
-    
-    @track mapType = 'google';
+    // Basic Configuration
+    @track title = '';
+    @track caption = '';
+    @track iconName = '';
     @track height = '400px';
+    @track isJoined = false;
+    
+    // Map Type
+    @track mapType = 'google';
+    
+    // Data Source
     @track sourceType = 'query';
     @track objectApiName = '';
     @track queryFilter = '';
     @track recordLimit = 100;
     @track markersJson = '';
+    
+    // Field Mappings
     @track titleField = '';
     @track descriptionField = '';
     @track addressField = '';
@@ -66,9 +62,12 @@ export default class FlowMapCpe extends LightningElement {
     @track cityField = '';
     @track stateField = '';
     @track postalCodeField = '';
-    @track countryField = '';
     @track streetField = '';
+    @track countryField = '';
     @track customIconField = '';
+    
+    // Map Center
+    @track centerType = 'auto';
     @track centerLatitude = '';
     @track centerLongitude = '';
     @track centerStreet = '';
@@ -77,19 +76,27 @@ export default class FlowMapCpe extends LightningElement {
     @track centerPostalCode = '';
     @track centerCountry = '';
     @track displayCenterAsMarker = false;
+    
+    // Zoom
     @track zoomLevel = 10;
+    
+    // Marker Style
     @track markerType = 'default';
     @track markerFillColor = '#EA4335';
-    @track markerFillOpacity = 0.7;
+    @track markerFillOpacity = '0.7';
     @track markerStrokeColor = '#C62828';
     @track markerStrokeWidth = 2;
     @track markerRadius = 10;
-    @track markerScale = 1;
+    @track markerScale = '1';
     @track customIconSvg = '';
+    
+    // Clustering
     @track enableClustering = false;
     @track showCoverageOnHover = false;
     @track maxClusterRadius = 80;
     @track disableClusteringAtZoom = '';
+    
+    // Drawing
     @track enableDrawing = false;
     @track drawToolMarker = false;
     @track drawToolLine = false;
@@ -98,26 +105,61 @@ export default class FlowMapCpe extends LightningElement {
     @track drawToolEdit = false;
     @track drawToolDelete = false;
     @track drawToolbarPosition = 'topright';
+    
+    // Content Document
     @track saveAsContentDocument = false;
     @track autoSaveContentDocument = false;
     @track contentDocumentLinkedEntityId = '';
     @track contentDocumentId = '';
-    @track contentDocumentTitle = 'Flow Map Drawing Document';
+    @track contentDocumentTitle = '';
+    
+    // GeoJSON
     @track geoJsonValue = '';
     @track drawContentDocumentId = '';
-    @track title = '';
-    @track caption = '';
-    @track iconName = '';
-    @track isJoined = false;
-    @track headerButtonsJson = '';
+    
+    // List & Search
     @track listViewVisibility = 'auto';
+    @track listPosition = 'left';
+    @track listCollapsible = true;
     @track isSearchable = false;
     @track searchPlaceholder = 'Search locations...';
     @track searchPosition = 'right';
+    
+    // Filter
     @track showFilterOption = false;
     @track filterFieldsJson = '';
+    
+    // Header
+    @track headerButtonsJson = '';
+    
+    // Marker Drag
     @track enableMarkerDrag = false;
-
+    
+    // UI State
+    @track objectOptions = [];
+    @track fieldOptions = [];
+    @track isLoadingObjects = false;
+    @track isLoadingFields = false;
+    @track expandedSections = {
+        basic: true,
+        mapType: true,
+        dataSource: true,
+        fieldMappings: false,
+        mapCenter: false,
+        markerStyle: false,
+        clustering: false,
+        drawing: false,
+        listSearch: false
+    };
+    
+    // ============================================
+    // LIFECYCLE HOOKS
+    // ============================================
+    
+    connectedCallback() {
+        this.loadSObjects();
+    }
+    
     // ============================================
     // INITIALIZATION
     // ============================================
@@ -125,61 +167,67 @@ export default class FlowMapCpe extends LightningElement {
     initializeValues() {
         if (!this._inputVariables || this._inputVariables.length === 0) return;
         
-        // Create a map for easy lookup
+        // Build a map for easy access
         const valueMap = {};
         this._inputVariables.forEach(variable => {
-            if (variable.value !== undefined && variable.value !== null) {
+            if (variable && variable.name !== undefined) {
                 valueMap[variable.name] = variable.value;
             }
         });
         
-        console.log('CPE initializing with values:', JSON.stringify(valueMap));
-        
         // String properties
         const stringProps = [
-            'mapType', 'height', 'sourceType', 'objectApiName', 'queryFilter', 'markersJson',
-            'titleField', 'descriptionField', 'addressField', 'latitudeField', 'longitudeField',
-            'cityField', 'stateField', 'postalCodeField', 'countryField', 'streetField', 'customIconField',
-            'centerLatitude', 'centerLongitude', 'centerStreet', 'centerCity', 'centerState',
-            'centerPostalCode', 'centerCountry', 'markerType', 'markerFillColor', 'markerStrokeColor',
-            'customIconSvg', 'drawToolbarPosition', 'contentDocumentLinkedEntityId', 'contentDocumentId',
-            'contentDocumentTitle', 'geoJsonValue', 'drawContentDocumentId', 'title', 'caption',
-            'iconName', 'headerButtonsJson', 'listViewVisibility', 'searchPlaceholder', 'searchPosition',
-            'filterFieldsJson', 'disableClusteringAtZoom'
+            'title', 'caption', 'iconName', 'height', 'mapType', 'sourceType',
+            'objectApiName', 'queryFilter', 'markersJson', 'titleField', 
+            'descriptionField', 'addressField', 'latitudeField', 'longitudeField',
+            'cityField', 'stateField', 'postalCodeField', 'streetField', 'countryField',
+            'customIconField', 'centerLatitude', 'centerLongitude', 'centerStreet',
+            'centerCity', 'centerState', 'centerPostalCode', 'centerCountry',
+            'markerType', 'markerFillColor', 'markerStrokeColor', 'markerFillOpacity',
+            'markerScale', 'customIconSvg', 'drawToolbarPosition', 'geoJsonValue',
+            'drawContentDocumentId', 'contentDocumentLinkedEntityId', 'contentDocumentId',
+            'contentDocumentTitle', 'listViewVisibility', 'listPosition', 'searchPlaceholder',
+            'searchPosition', 'filterFieldsJson', 'headerButtonsJson', 'disableClusteringAtZoom'
         ];
         
         stringProps.forEach(prop => {
-            if (valueMap[prop] !== undefined && valueMap[prop] !== '') {
+            if (valueMap[prop] !== undefined && valueMap[prop] !== null && valueMap[prop] !== '') {
                 this[prop] = String(valueMap[prop]);
             }
         });
         
         // Integer properties
-        if (valueMap.recordLimit !== undefined) this.recordLimit = parseInt(valueMap.recordLimit, 10) || 100;
-        if (valueMap.zoomLevel !== undefined) this.zoomLevel = parseInt(valueMap.zoomLevel, 10) || 10;
-        if (valueMap.markerStrokeWidth !== undefined) this.markerStrokeWidth = parseInt(valueMap.markerStrokeWidth, 10) || 2;
-        if (valueMap.markerRadius !== undefined) this.markerRadius = parseInt(valueMap.markerRadius, 10) || 10;
-        if (valueMap.maxClusterRadius !== undefined) this.maxClusterRadius = parseInt(valueMap.maxClusterRadius, 10) || 80;
+        const intProps = {
+            'recordLimit': 100,
+            'zoomLevel': 10,
+            'markerStrokeWidth': 2,
+            'markerRadius': 10,
+            'maxClusterRadius': 80
+        };
         
-        // Float properties
-        if (valueMap.markerFillOpacity !== undefined) this.markerFillOpacity = parseFloat(valueMap.markerFillOpacity) || 0.7;
-        if (valueMap.markerScale !== undefined) this.markerScale = parseFloat(valueMap.markerScale) || 1;
-        
-        // Boolean properties
-        const boolProps = [
-            'displayCenterAsMarker', 'enableClustering', 'showCoverageOnHover', 'enableDrawing',
-            'drawToolMarker', 'drawToolLine', 'drawToolPolygon', 'drawToolCircle', 'drawToolEdit',
-            'drawToolDelete', 'saveAsContentDocument', 'autoSaveContentDocument', 'isJoined',
-            'isSearchable', 'showFilterOption', 'enableMarkerDrag'
-        ];
-        
-        boolProps.forEach(prop => {
-            if (valueMap[prop] !== undefined) {
-                this[prop] = valueMap[prop] === true || valueMap[prop] === 'true';
+        Object.keys(intProps).forEach(prop => {
+            if (valueMap[prop] !== undefined && valueMap[prop] !== null) {
+                const parsed = parseInt(valueMap[prop], 10);
+                this[prop] = isNaN(parsed) ? intProps[prop] : parsed;
             }
         });
         
-        // Determine center type based on values
+        // Boolean properties - handle $GlobalConstant.True/False format
+        const boolProps = [
+            'isJoined', 'displayCenterAsMarker', 'enableClustering', 'showCoverageOnHover',
+            'enableDrawing', 'drawToolMarker', 'drawToolLine', 'drawToolPolygon',
+            'drawToolCircle', 'drawToolEdit', 'drawToolDelete', 'saveAsContentDocument',
+            'autoSaveContentDocument', 'isSearchable', 'showFilterOption', 'enableMarkerDrag',
+            'listCollapsible'
+        ];
+        
+        boolProps.forEach(prop => {
+            if (valueMap[prop] !== undefined && valueMap[prop] !== null) {
+                this[prop] = this.parseBooleanValue(valueMap[prop]);
+            }
+        });
+        
+        // Determine center type
         if (this.centerLatitude || this.centerLongitude) {
             this.centerType = 'coordinates';
         } else if (this.centerCity || this.centerCountry || this.centerStreet) {
@@ -188,199 +236,171 @@ export default class FlowMapCpe extends LightningElement {
             this.centerType = 'auto';
         }
         
-        console.log('CPE initialized. mapType =', this.mapType);
+        // Load fields if we have an object
+        if (this.objectApiName) {
+            this.loadObjectFields();
+        }
+    }
+    
+    parseBooleanValue(value) {
+        if (value === true || value === 'true' || value === '$GlobalConstant.True') {
+            return true;
+        }
+        return false;
     }
     
     // ============================================
-    // FLOW VARIABLE OPTIONS
+    // VALIDATION (Required by Flow Builder)
     // ============================================
     
-    get flowVariableOptions() {
-        const options = [{ label: '-- Enter manually --', value: '' }];
+    @api
+    validate() {
+        const errors = [];
         
-        if (this._builderContext && this._builderContext.variables) {
-            this._builderContext.variables.forEach(variable => {
-                if (variable.dataType === 'String' || variable.dataType === 'Number' || variable.dataType === 'SObject') {
-                    options.push({
-                        label: '{!' + variable.name + '}',
-                        value: '{!' + variable.name + '}'
-                    });
-                }
-            });
+        // Validate required fields based on source type
+        if (this.sourceType === 'query') {
+            if (!this.objectApiName) {
+                errors.push({
+                    key: 'objectApiName',
+                    errorString: 'Object API Name is required when using Query data source'
+                });
+            }
         }
         
-        return options;
-    }
-    
-    get hasFlowVariables() {
-        return this._builderContext && this._builderContext.variables && this._builderContext.variables.length > 0;
-    }
-
-    // ============================================
-    // COMPUTED PROPERTIES - SECTIONS
-    // ============================================
-    
-    get mapTypeSectionIcon() {
-        return this.expandedSections.mapType ? 'utility:chevrondown' : 'utility:chevronright';
-    }
-    get mapTypeSectionClass() {
-        return this.expandedSections.mapType ? 'section-content expanded' : 'section-content collapsed';
-    }
-    
-    get dataSourceSectionIcon() {
-        return this.expandedSections.dataSource ? 'utility:chevrondown' : 'utility:chevronright';
-    }
-    get dataSourceSectionClass() {
-        return this.expandedSections.dataSource ? 'section-content expanded' : 'section-content collapsed';
-    }
-    
-    get fieldMappingsSectionIcon() {
-        return this.expandedSections.fieldMappings ? 'utility:chevrondown' : 'utility:chevronright';
-    }
-    get fieldMappingsSectionClass() {
-        return this.expandedSections.fieldMappings ? 'section-content expanded' : 'section-content collapsed';
-    }
-    
-    get mapCenterSectionIcon() {
-        return this.expandedSections.mapCenter ? 'utility:chevrondown' : 'utility:chevronright';
-    }
-    get mapCenterSectionClass() {
-        return this.expandedSections.mapCenter ? 'section-content expanded' : 'section-content collapsed';
-    }
-    
-    get markerStyleSectionIcon() {
-        return this.expandedSections.markerStyle ? 'utility:chevrondown' : 'utility:chevronright';
-    }
-    get markerStyleSectionClass() {
-        return this.expandedSections.markerStyle ? 'section-content expanded' : 'section-content collapsed';
-    }
-    
-    get clusteringSectionIcon() {
-        return this.expandedSections.clustering ? 'utility:chevrondown' : 'utility:chevronright';
-    }
-    get clusteringSectionClass() {
-        return this.expandedSections.clustering ? 'section-content expanded' : 'section-content collapsed';
-    }
-    
-    get drawingSectionIcon() {
-        return this.expandedSections.drawing ? 'utility:chevrondown' : 'utility:chevronright';
-    }
-    get drawingSectionClass() {
-        return this.expandedSections.drawing ? 'section-content expanded' : 'section-content collapsed';
-    }
-    
-    get geojsonSectionIcon() {
-        return this.expandedSections.geojson ? 'utility:chevrondown' : 'utility:chevronright';
-    }
-    get geojsonSectionClass() {
-        return this.expandedSections.geojson ? 'section-content expanded' : 'section-content collapsed';
-    }
-    
-    get headerUISectionIcon() {
-        return this.expandedSections.headerUI ? 'utility:chevrondown' : 'utility:chevronright';
-    }
-    get headerUISectionClass() {
-        return this.expandedSections.headerUI ? 'section-content expanded' : 'section-content collapsed';
-    }
-    
-    get listSearchSectionIcon() {
-        return this.expandedSections.listSearch ? 'utility:chevrondown' : 'utility:chevronright';
-    }
-    get listSearchSectionClass() {
-        return this.expandedSections.listSearch ? 'section-content expanded' : 'section-content collapsed';
-    }
-
-    // ============================================
-    // COMPUTED PROPERTIES - CONDITIONS
-    // ============================================
-    
-    get isLeafletMaps() {
-        return this.mapType === 'leaflet';
-    }
-    
-    get googleMapClass() {
-        return this.mapType === 'google' ? 'map-type-card selected' : 'map-type-card';
-    }
-    
-    get leafletMapClass() {
-        return this.mapType === 'leaflet' ? 'map-type-card selected' : 'map-type-card';
-    }
-    
-    get isQueryMode() {
-        return this.sourceType === 'query';
-    }
-    
-    get isVariableOrManualMode() {
-        return this.sourceType === 'variable' || this.sourceType === 'manual';
-    }
-    
-    get queryButtonClass() {
-        return this.sourceType === 'query' ? 'source-button selected' : 'source-button';
-    }
-    
-    get variableButtonClass() {
-        return this.sourceType === 'variable' ? 'source-button selected' : 'source-button';
-    }
-    
-    get manualButtonClass() {
-        return this.sourceType === 'manual' ? 'source-button selected' : 'source-button';
-    }
-    
-    get isCenterCoordinates() {
-        return this.centerType === 'coordinates';
-    }
-    
-    get isCenterAddress() {
-        return this.centerType === 'address';
-    }
-    
-    get coordinatesCenterClass() {
-        return this.centerType === 'coordinates' ? 'source-button selected' : 'source-button';
-    }
-    
-    get addressCenterClass() {
-        return this.centerType === 'address' ? 'source-button selected' : 'source-button';
-    }
-    
-    get autoCenterClass() {
-        return this.centerType === 'auto' ? 'source-button selected' : 'source-button';
-    }
-    
-    get isCustomMarkerType() {
-        return this.markerType === 'customIcon';
-    }
-    
-    get zoomLabel() {
-        if (this.zoomLevel <= 3) return 'World';
-        if (this.zoomLevel <= 6) return 'Continent';
-        if (this.zoomLevel <= 10) return 'City';
-        if (this.zoomLevel <= 15) return 'Streets';
-        return 'Buildings';
+        // Validate location fields based on map type
+        if (this.mapType === 'leaflet' && this.sourceType === 'query') {
+            if (!this.latitudeField || !this.longitudeField) {
+                // Only warn, not error - they might be using address fields
+            }
+        }
+        
+        return errors;
     }
     
     // ============================================
-    // MARKER TYPE CLASS GETTERS
+    // DATA LOADING
     // ============================================
     
-    get defaultMarkerClass() {
-        return this.markerType === 'default' ? 'marker-type-option selected' : 'marker-type-option';
+    async loadSObjects() {
+        this.isLoadingObjects = true;
+        try {
+            const objects = await getSObjects();
+            this.objectOptions = objects.map(obj => ({
+                label: obj.label,
+                value: obj.apiName
+            }));
+        } catch (error) {
+            console.error('Error loading sObjects:', error);
+            this.objectOptions = [];
+        } finally {
+            this.isLoadingObjects = false;
+        }
     }
     
-    get circleMarkerClass() {
-        return this.markerType === 'circle' ? 'marker-type-option selected' : 'marker-type-option';
+    async loadObjectFields() {
+        if (!this.objectApiName) {
+            this.fieldOptions = [];
+            return;
+        }
+        
+        this.isLoadingFields = true;
+        try {
+            const fields = await getObjectFields({ objectApiName: this.objectApiName });
+            this.fieldOptions = fields.map(field => ({
+                label: field.label,
+                value: field.apiName
+            }));
+        } catch (error) {
+            console.error('Error loading fields:', error);
+            this.fieldOptions = [];
+        } finally {
+            this.isLoadingFields = false;
+        }
     }
     
-    get pinMarkerClass() {
-        return this.markerType === 'pin' ? 'marker-type-option selected' : 'marker-type-option';
-    }
-    
-    get customMarkerClass() {
-        return this.markerType === 'customIcon' ? 'marker-type-option selected' : 'marker-type-option';
-    }
-
     // ============================================
-    // DROPDOWN OPTIONS
+    // VALUE CHANGE DISPATCH
+    // This is the critical method that communicates with Flow Builder
     // ============================================
+    
+    dispatchValueChange(name, value, dataType = 'String') {
+        // Ensure we have valid values
+        const safeValue = (value === undefined || value === null) ? '' : value;
+        
+        const detail = {
+            name: name,
+            newValue: safeValue,
+            newValueDataType: dataType
+        };
+        
+        const valueChangedEvent = new CustomEvent('configuration_editor_input_value_changed', {
+            bubbles: true,
+            composed: true,
+            cancelable: false,
+            detail: detail
+        });
+        
+        this.dispatchEvent(valueChangedEvent);
+    }
+    
+    // ============================================
+    // OPTION GETTERS
+    // ============================================
+    
+    get mapTypeOptions() {
+        return [
+            { label: 'Google Maps', value: 'google' },
+            { label: 'Leaflet (Clustering & Drawing)', value: 'leaflet' }
+        ];
+    }
+    
+    get sourceTypeOptions() {
+        return [
+            { label: 'SOQL Query', value: 'query' },
+            { label: 'Manual JSON', value: 'manual' },
+            { label: 'Flow Variable', value: 'variable' }
+        ];
+    }
+    
+    get centerTypeOptions() {
+        return [
+            { label: 'Auto (Fit to Markers)', value: 'auto' },
+            { label: 'Coordinates', value: 'coordinates' },
+            { label: 'Address', value: 'address' }
+        ];
+    }
+    
+    get markerTypeOptions() {
+        return [
+            { label: 'Default Pin', value: 'default' },
+            { label: 'Circle', value: 'circle' },
+            { label: 'Custom Icon', value: 'customIcon' }
+        ];
+    }
+    
+    get listViewOptions() {
+        return [
+            { label: 'Auto (Show when multiple)', value: 'auto' },
+            { label: 'Always Visible', value: 'visible' },
+            { label: 'Always Hidden', value: 'hidden' }
+        ];
+    }
+    
+    get listPositionOptions() {
+        return [
+            { label: 'Left', value: 'left' },
+            { label: 'Right', value: 'right' }
+        ];
+    }
+    
+    get searchPositionOptions() {
+        return [
+            { label: 'Left', value: 'left' },
+            { label: 'Right', value: 'right' },
+            { label: 'Center', value: 'center' },
+            { label: 'Full Width', value: 'fill' }
+        ];
+    }
     
     get toolbarPositionOptions() {
         return [
@@ -391,25 +411,44 @@ export default class FlowMapCpe extends LightningElement {
         ];
     }
     
-    get listViewOptions() {
-        return [
-            { label: 'Auto (show when multiple markers)', value: 'auto' },
-            { label: 'Always Visible', value: 'visible' },
-            { label: 'Always Hidden', value: 'hidden' }
-        ];
+    // ============================================
+    // UI STATE GETTERS
+    // ============================================
+    
+    get isGoogleMaps() {
+        return this.mapType === 'google';
     }
     
-    get searchPositionOptions() {
-        return [
-            { label: 'Left', value: 'left' },
-            { label: 'Right', value: 'right' },
-            { label: 'Center', value: 'center' },
-            { label: 'Fill', value: 'fill' }
-        ];
+    get isLeaflet() {
+        return this.mapType === 'leaflet';
     }
-
+    
+    get isQuerySource() {
+        return this.sourceType === 'query';
+    }
+    
+    get isManualSource() {
+        return this.sourceType === 'manual' || this.sourceType === 'variable';
+    }
+    
+    get showCoordinateCenter() {
+        return this.centerType === 'coordinates';
+    }
+    
+    get showAddressCenter() {
+        return this.centerType === 'address';
+    }
+    
+    get showMarkerColorOptions() {
+        return this.markerType === 'circle' || this.markerType === 'default';
+    }
+    
+    get showCustomIconOptions() {
+        return this.markerType === 'customIcon';
+    }
+    
     // ============================================
-    // SECTION TOGGLE HANDLER
+    // SECTION TOGGLE HANDLERS
     // ============================================
     
     toggleSection(event) {
@@ -419,298 +458,275 @@ export default class FlowMapCpe extends LightningElement {
             [section]: !this.expandedSections[section]
         };
     }
-
+    
+    get basicExpanded() { return this.expandedSections.basic; }
+    get mapTypeExpanded() { return this.expandedSections.mapType; }
+    get dataSourceExpanded() { return this.expandedSections.dataSource; }
+    get fieldMappingsExpanded() { return this.expandedSections.fieldMappings; }
+    get mapCenterExpanded() { return this.expandedSections.mapCenter; }
+    get markerStyleExpanded() { return this.expandedSections.markerStyle; }
+    get clusteringExpanded() { return this.expandedSections.clustering; }
+    get drawingExpanded() { return this.expandedSections.drawing; }
+    get listSearchExpanded() { return this.expandedSections.listSearch; }
+    
     // ============================================
-    // DISPATCH VALUE CHANGE TO FLOW
+    // INPUT CHANGE HANDLERS
     // ============================================
     
-    dispatchValueChange(name, value, dataType = 'String') {
-        console.log('Dispatching value change:', name, '=', value, '(', dataType, ')');
-        const valueChangeEvent = new CustomEvent('configuration_editor_input_value_changed', {
-            bubbles: true,
-            cancelable: false,
-            composed: true,
-            detail: {
-                name: name,
-                newValue: value,
-                newValueDataType: dataType
-            }
-        });
-        this.dispatchEvent(valueChangeEvent);
-    }
-
-    // ============================================
-    // MAP TYPE HANDLERS
-    // ============================================
-    
-    selectGoogleMaps() {
-        this.mapType = 'google';
-        this.dispatchValueChange('mapType', 'google', 'String');
+    // Basic Configuration
+    handleTitleChange(event) {
+        this.title = event.detail.value;
+        this.dispatchValueChange('title', this.title, 'String');
     }
     
-    selectLeafletMaps() {
-        this.mapType = 'leaflet';
-        this.dispatchValueChange('mapType', 'leaflet', 'String');
+    handleCaptionChange(event) {
+        this.caption = event.detail.value;
+        this.dispatchValueChange('caption', this.caption, 'String');
+    }
+    
+    handleIconNameChange(event) {
+        this.iconName = event.detail.value;
+        this.dispatchValueChange('iconName', this.iconName, 'String');
     }
     
     handleHeightChange(event) {
-        this.height = event.target.value;
+        this.height = event.detail.value;
         this.dispatchValueChange('height', this.height, 'String');
     }
-
-    // ============================================
-    // DATA SOURCE HANDLERS
-    // ============================================
     
-    handleSourceTypeChange(event) {
-        const value = event.currentTarget.dataset.value;
-        this.sourceType = value;
-        this.dispatchValueChange('sourceType', value, 'String');
+    handleIsJoinedChange(event) {
+        this.isJoined = event.detail.checked;
+        this.dispatchValueChange('isJoined', this.isJoined ? '$GlobalConstant.True' : '$GlobalConstant.False', 'Boolean');
     }
     
-    handleObjectApiNameChange(event) {
-        this.objectApiName = event.target.value;
+    // Map Type
+    handleMapTypeChange(event) {
+        this.mapType = event.detail.value;
+        this.dispatchValueChange('mapType', this.mapType, 'String');
+    }
+    
+    // Data Source
+    handleSourceTypeChange(event) {
+        this.sourceType = event.detail.value;
+        this.dispatchValueChange('sourceType', this.sourceType, 'String');
+    }
+    
+    handleObjectChange(event) {
+        this.objectApiName = event.detail.value;
         this.dispatchValueChange('objectApiName', this.objectApiName, 'String');
+        this.loadObjectFields();
     }
     
     handleQueryFilterChange(event) {
-        this.queryFilter = event.target.value;
+        this.queryFilter = event.detail.value;
         this.dispatchValueChange('queryFilter', this.queryFilter, 'String');
     }
     
     handleRecordLimitChange(event) {
-        this.recordLimit = parseInt(event.target.value, 10) || 100;
-        this.dispatchValueChange('recordLimit', this.recordLimit, 'Integer');
+        this.recordLimit = parseInt(event.detail.value, 10) || 100;
+        this.dispatchValueChange('recordLimit', this.recordLimit, 'Number');
     }
     
     handleMarkersJsonChange(event) {
-        this.markersJson = event.target.value;
+        this.markersJson = event.detail.value;
         this.dispatchValueChange('markersJson', this.markersJson, 'String');
     }
-
-    // ============================================
-    // FIELD MAPPING HANDLERS
-    // ============================================
     
+    // Field Mappings
     handleTitleFieldChange(event) {
-        this.titleField = event.target.value;
+        this.titleField = event.detail.value;
         this.dispatchValueChange('titleField', this.titleField, 'String');
     }
     
     handleDescriptionFieldChange(event) {
-        this.descriptionField = event.target.value;
+        this.descriptionField = event.detail.value;
         this.dispatchValueChange('descriptionField', this.descriptionField, 'String');
     }
     
-    handleCustomIconFieldChange(event) {
-        this.customIconField = event.target.value;
-        this.dispatchValueChange('customIconField', this.customIconField, 'String');
-    }
-    
     handleLatitudeFieldChange(event) {
-        this.latitudeField = event.target.value;
+        this.latitudeField = event.detail.value;
         this.dispatchValueChange('latitudeField', this.latitudeField, 'String');
     }
     
     handleLongitudeFieldChange(event) {
-        this.longitudeField = event.target.value;
+        this.longitudeField = event.detail.value;
         this.dispatchValueChange('longitudeField', this.longitudeField, 'String');
     }
     
-    handleAddressFieldChange(event) {
-        this.addressField = event.target.value;
-        this.dispatchValueChange('addressField', this.addressField, 'String');
+    handleStreetFieldChange(event) {
+        this.streetField = event.detail.value;
+        this.dispatchValueChange('streetField', this.streetField, 'String');
     }
     
     handleCityFieldChange(event) {
-        this.cityField = event.target.value;
+        this.cityField = event.detail.value;
         this.dispatchValueChange('cityField', this.cityField, 'String');
     }
     
     handleStateFieldChange(event) {
-        this.stateField = event.target.value;
+        this.stateField = event.detail.value;
         this.dispatchValueChange('stateField', this.stateField, 'String');
     }
     
     handlePostalCodeFieldChange(event) {
-        this.postalCodeField = event.target.value;
+        this.postalCodeField = event.detail.value;
         this.dispatchValueChange('postalCodeField', this.postalCodeField, 'String');
     }
     
     handleCountryFieldChange(event) {
-        this.countryField = event.target.value;
+        this.countryField = event.detail.value;
         this.dispatchValueChange('countryField', this.countryField, 'String');
     }
-
     
-    handleStreetFieldChange(event) {
-        this.streetField = event.target.value;
-        this.dispatchValueChange('streetField', this.streetField, 'String');
+    handleCustomIconFieldChange(event) {
+        this.customIconField = event.detail.value;
+        this.dispatchValueChange('customIconField', this.customIconField, 'String');
     }
     
-    handleContentDocumentIdChange(event) {
-        this.contentDocumentId = event.target.value;
-        this.dispatchValueChange('contentDocumentId', this.contentDocumentId, 'String');
-    }
-    // ============================================
-    // MAP CENTER HANDLERS
-    // ============================================
-    
+    // Map Center
     handleCenterTypeChange(event) {
-        this.centerType = event.currentTarget.dataset.value;
+        this.centerType = event.detail.value;
+        // Clear values when switching
+        if (this.centerType === 'auto') {
+            this.clearCenterValues();
+        }
+    }
+    
+    clearCenterValues() {
+        const centerProps = ['centerLatitude', 'centerLongitude', 'centerStreet', 
+                            'centerCity', 'centerState', 'centerPostalCode', 'centerCountry'];
+        centerProps.forEach(prop => {
+            this[prop] = '';
+            this.dispatchValueChange(prop, '', 'String');
+        });
     }
     
     handleCenterLatitudeChange(event) {
-        this.centerLatitude = event.target.value;
+        this.centerLatitude = event.detail.value;
         this.dispatchValueChange('centerLatitude', this.centerLatitude, 'String');
     }
     
     handleCenterLongitudeChange(event) {
-        this.centerLongitude = event.target.value;
+        this.centerLongitude = event.detail.value;
         this.dispatchValueChange('centerLongitude', this.centerLongitude, 'String');
     }
     
     handleCenterStreetChange(event) {
-        this.centerStreet = event.target.value;
+        this.centerStreet = event.detail.value;
         this.dispatchValueChange('centerStreet', this.centerStreet, 'String');
     }
     
     handleCenterCityChange(event) {
-        this.centerCity = event.target.value;
+        this.centerCity = event.detail.value;
         this.dispatchValueChange('centerCity', this.centerCity, 'String');
     }
     
     handleCenterStateChange(event) {
-        this.centerState = event.target.value;
+        this.centerState = event.detail.value;
         this.dispatchValueChange('centerState', this.centerState, 'String');
     }
     
     handleCenterPostalCodeChange(event) {
-        this.centerPostalCode = event.target.value;
+        this.centerPostalCode = event.detail.value;
         this.dispatchValueChange('centerPostalCode', this.centerPostalCode, 'String');
     }
     
     handleCenterCountryChange(event) {
-        this.centerCountry = event.target.value;
+        this.centerCountry = event.detail.value;
         this.dispatchValueChange('centerCountry', this.centerCountry, 'String');
     }
     
     handleDisplayCenterAsMarkerChange(event) {
-        this.displayCenterAsMarker = event.target.checked;
-        this.dispatchValueChange('displayCenterAsMarker', this.displayCenterAsMarker, 'Boolean');
+        this.displayCenterAsMarker = event.detail.checked;
+        this.dispatchValueChange('displayCenterAsMarker', this.displayCenterAsMarker ? '$GlobalConstant.True' : '$GlobalConstant.False', 'Boolean');
     }
     
     handleZoomLevelChange(event) {
-        this.zoomLevel = parseInt(event.target.value, 10);
-        this.dispatchValueChange('zoomLevel', this.zoomLevel, 'Integer');
+        this.zoomLevel = parseInt(event.detail.value, 10) || 10;
+        this.dispatchValueChange('zoomLevel', this.zoomLevel, 'Number');
     }
-
-    // ============================================
-    // MARKER STYLE HANDLERS
-    // ============================================
     
+    // Marker Style
     handleMarkerTypeChange(event) {
-        const value = event.currentTarget.dataset.value;
-        this.markerType = value;
-        this.dispatchValueChange('markerType', value, 'String');
+        this.markerType = event.detail.value;
+        this.dispatchValueChange('markerType', this.markerType, 'String');
     }
     
     handleMarkerFillColorChange(event) {
-        this.markerFillColor = event.target.value;
+        this.markerFillColor = event.detail.value;
         this.dispatchValueChange('markerFillColor', this.markerFillColor, 'String');
     }
     
     handleMarkerStrokeColorChange(event) {
-        this.markerStrokeColor = event.target.value;
+        this.markerStrokeColor = event.detail.value;
         this.dispatchValueChange('markerStrokeColor', this.markerStrokeColor, 'String');
     }
     
-    handleMarkerFillOpacityChange(event) {
-        this.markerFillOpacity = parseFloat(event.target.value);
-        this.dispatchValueChange('markerFillOpacity', String(this.markerFillOpacity), 'String');
-    }
-    
-    handleMarkerStrokeWidthChange(event) {
-        this.markerStrokeWidth = parseInt(event.target.value, 10);
-        this.dispatchValueChange('markerStrokeWidth', this.markerStrokeWidth, 'Integer');
-    }
-    
     handleMarkerRadiusChange(event) {
-        this.markerRadius = parseInt(event.target.value, 10);
-        this.dispatchValueChange('markerRadius', this.markerRadius, 'Integer');
-    }
-    
-    handleMarkerScaleChange(event) {
-        this.markerScale = parseFloat(event.target.value);
-        this.dispatchValueChange('markerScale', String(this.markerScale), 'String');
+        this.markerRadius = parseInt(event.detail.value, 10) || 10;
+        this.dispatchValueChange('markerRadius', this.markerRadius, 'Number');
     }
     
     handleCustomIconSvgChange(event) {
-        this.customIconSvg = event.target.value;
+        this.customIconSvg = event.detail.value;
         this.dispatchValueChange('customIconSvg', this.customIconSvg, 'String');
     }
-
-    // ============================================
-    // CLUSTERING HANDLERS
-    // ============================================
     
+    // Clustering
     handleEnableClusteringChange(event) {
-        this.enableClustering = event.target.checked;
-        this.dispatchValueChange('enableClustering', this.enableClustering, 'Boolean');
+        this.enableClustering = event.detail.checked;
+        this.dispatchValueChange('enableClustering', this.enableClustering ? '$GlobalConstant.True' : '$GlobalConstant.False', 'Boolean');
     }
     
     handleShowCoverageOnHoverChange(event) {
-        this.showCoverageOnHover = event.target.checked;
-        this.dispatchValueChange('showCoverageOnHover', this.showCoverageOnHover, 'Boolean');
+        this.showCoverageOnHover = event.detail.checked;
+        this.dispatchValueChange('showCoverageOnHover', this.showCoverageOnHover ? '$GlobalConstant.True' : '$GlobalConstant.False', 'Boolean');
     }
     
     handleMaxClusterRadiusChange(event) {
-        this.maxClusterRadius = parseInt(event.target.value, 10);
-        this.dispatchValueChange('maxClusterRadius', this.maxClusterRadius, 'Integer');
+        this.maxClusterRadius = parseInt(event.detail.value, 10) || 80;
+        this.dispatchValueChange('maxClusterRadius', this.maxClusterRadius, 'Number');
     }
     
     handleDisableClusteringAtZoomChange(event) {
-        this.disableClusteringAtZoom = event.target.value;
-        this.dispatchValueChange('disableClusteringAtZoom', this.disableClusteringAtZoom ? parseInt(this.disableClusteringAtZoom, 10) : null, 'Integer');
+        this.disableClusteringAtZoom = event.detail.value;
+        this.dispatchValueChange('disableClusteringAtZoom', this.disableClusteringAtZoom, 'String');
     }
-
-    // ============================================
-    // DRAWING HANDLERS
-    // ============================================
     
+    // Drawing
     handleEnableDrawingChange(event) {
-        this.enableDrawing = event.target.checked;
-        this.dispatchValueChange('enableDrawing', this.enableDrawing, 'Boolean');
+        this.enableDrawing = event.detail.checked;
+        this.dispatchValueChange('enableDrawing', this.enableDrawing ? '$GlobalConstant.True' : '$GlobalConstant.False', 'Boolean');
     }
     
     handleDrawToolMarkerChange(event) {
-        this.drawToolMarker = event.target.checked;
-        this.dispatchValueChange('drawToolMarker', this.drawToolMarker, 'Boolean');
+        this.drawToolMarker = event.detail.checked;
+        this.dispatchValueChange('drawToolMarker', this.drawToolMarker ? '$GlobalConstant.True' : '$GlobalConstant.False', 'Boolean');
     }
     
     handleDrawToolLineChange(event) {
-        this.drawToolLine = event.target.checked;
-        this.dispatchValueChange('drawToolLine', this.drawToolLine, 'Boolean');
+        this.drawToolLine = event.detail.checked;
+        this.dispatchValueChange('drawToolLine', this.drawToolLine ? '$GlobalConstant.True' : '$GlobalConstant.False', 'Boolean');
     }
     
     handleDrawToolPolygonChange(event) {
-        this.drawToolPolygon = event.target.checked;
-        this.dispatchValueChange('drawToolPolygon', this.drawToolPolygon, 'Boolean');
+        this.drawToolPolygon = event.detail.checked;
+        this.dispatchValueChange('drawToolPolygon', this.drawToolPolygon ? '$GlobalConstant.True' : '$GlobalConstant.False', 'Boolean');
     }
     
     handleDrawToolCircleChange(event) {
-        this.drawToolCircle = event.target.checked;
-        this.dispatchValueChange('drawToolCircle', this.drawToolCircle, 'Boolean');
+        this.drawToolCircle = event.detail.checked;
+        this.dispatchValueChange('drawToolCircle', this.drawToolCircle ? '$GlobalConstant.True' : '$GlobalConstant.False', 'Boolean');
     }
     
     handleDrawToolEditChange(event) {
-        this.drawToolEdit = event.target.checked;
-        this.dispatchValueChange('drawToolEdit', this.drawToolEdit, 'Boolean');
+        this.drawToolEdit = event.detail.checked;
+        this.dispatchValueChange('drawToolEdit', this.drawToolEdit ? '$GlobalConstant.True' : '$GlobalConstant.False', 'Boolean');
     }
     
     handleDrawToolDeleteChange(event) {
-        this.drawToolDelete = event.target.checked;
-        this.dispatchValueChange('drawToolDelete', this.drawToolDelete, 'Boolean');
+        this.drawToolDelete = event.detail.checked;
+        this.dispatchValueChange('drawToolDelete', this.drawToolDelete ? '$GlobalConstant.True' : '$GlobalConstant.False', 'Boolean');
     }
     
     handleDrawToolbarPositionChange(event) {
@@ -718,85 +734,29 @@ export default class FlowMapCpe extends LightningElement {
         this.dispatchValueChange('drawToolbarPosition', this.drawToolbarPosition, 'String');
     }
     
-    handleSaveAsContentDocumentChange(event) {
-        this.saveAsContentDocument = event.target.checked;
-        this.dispatchValueChange('saveAsContentDocument', this.saveAsContentDocument, 'Boolean');
-    }
-    
-    handleAutoSaveContentDocumentChange(event) {
-        this.autoSaveContentDocument = event.target.checked;
-        this.dispatchValueChange('autoSaveContentDocument', this.autoSaveContentDocument, 'Boolean');
-    }
-    
-    handleContentDocumentLinkedEntityIdChange(event) {
-        this.contentDocumentLinkedEntityId = event.target.value;
-        this.dispatchValueChange('contentDocumentLinkedEntityId', this.contentDocumentLinkedEntityId, 'String');
-    }
-    
-    handleContentDocumentTitleChange(event) {
-        this.contentDocumentTitle = event.target.value;
-        this.dispatchValueChange('contentDocumentTitle', this.contentDocumentTitle, 'String');
-    }
-
-    // ============================================
-    // GEOJSON HANDLERS
-    // ============================================
-    
-    handleGeoJsonValueChange(event) {
-        this.geoJsonValue = event.target.value;
-        this.dispatchValueChange('geoJsonValue', this.geoJsonValue, 'String');
-    }
-    
-    handleDrawContentDocumentIdChange(event) {
-        this.drawContentDocumentId = event.target.value;
-        this.dispatchValueChange('drawContentDocumentId', this.drawContentDocumentId, 'String');
-    }
-
-    // ============================================
-    // HEADER UI HANDLERS
-    // ============================================
-    
-    handleTitleChange(event) {
-        this.title = event.target.value;
-        this.dispatchValueChange('title', this.title, 'String');
-    }
-    
-    handleCaptionChange(event) {
-        this.caption = event.target.value;
-        this.dispatchValueChange('caption', this.caption, 'String');
-    }
-    
-    handleIconNameChange(event) {
-        this.iconName = event.target.value;
-        this.dispatchValueChange('iconName', this.iconName, 'String');
-    }
-    
-    handleIsJoinedChange(event) {
-        this.isJoined = event.target.checked;
-        this.dispatchValueChange('isJoined', this.isJoined, 'Boolean');
-    }
-    
-    handleHeaderButtonsJsonChange(event) {
-        this.headerButtonsJson = event.target.value;
-        this.dispatchValueChange('headerButtonsJson', this.headerButtonsJson, 'String');
-    }
-
-    // ============================================
-    // LIST VIEW & SEARCH HANDLERS
-    // ============================================
-    
+    // List & Search
     handleListViewVisibilityChange(event) {
         this.listViewVisibility = event.detail.value;
         this.dispatchValueChange('listViewVisibility', this.listViewVisibility, 'String');
     }
     
+    handleListPositionChange(event) {
+        this.listPosition = event.detail.value;
+        this.dispatchValueChange('listPosition', this.listPosition, 'String');
+    }
+    
+    handleListCollapsibleChange(event) {
+        this.listCollapsible = event.detail.checked;
+        this.dispatchValueChange('listCollapsible', this.listCollapsible ? '$GlobalConstant.True' : '$GlobalConstant.False', 'Boolean');
+    }
+    
     handleIsSearchableChange(event) {
-        this.isSearchable = event.target.checked;
-        this.dispatchValueChange('isSearchable', this.isSearchable, 'Boolean');
+        this.isSearchable = event.detail.checked;
+        this.dispatchValueChange('isSearchable', this.isSearchable ? '$GlobalConstant.True' : '$GlobalConstant.False', 'Boolean');
     }
     
     handleSearchPlaceholderChange(event) {
-        this.searchPlaceholder = event.target.value;
+        this.searchPlaceholder = event.detail.value;
         this.dispatchValueChange('searchPlaceholder', this.searchPlaceholder, 'String');
     }
     
@@ -806,35 +766,12 @@ export default class FlowMapCpe extends LightningElement {
     }
     
     handleShowFilterOptionChange(event) {
-        this.showFilterOption = event.target.checked;
-        this.dispatchValueChange('showFilterOption', this.showFilterOption, 'Boolean');
-    }
-    
-    handleFilterFieldsJsonChange(event) {
-        this.filterFieldsJson = event.target.value;
-        this.dispatchValueChange('filterFieldsJson', this.filterFieldsJson, 'String');
+        this.showFilterOption = event.detail.checked;
+        this.dispatchValueChange('showFilterOption', this.showFilterOption ? '$GlobalConstant.True' : '$GlobalConstant.False', 'Boolean');
     }
     
     handleEnableMarkerDragChange(event) {
-        this.enableMarkerDrag = event.target.checked;
-        this.dispatchValueChange('enableMarkerDrag', this.enableMarkerDrag, 'Boolean');
-    }
-
-    // ============================================
-    // VALIDATION
-    // ============================================
-    
-    @api
-    validate() {
-        const validity = [];
-        
-        if (this.sourceType === 'query' && !this.objectApiName) {
-            validity.push({
-                key: 'objectApiName',
-                errorString: 'Object API Name is required when using Query data source'
-            });
-        }
-        
-        return validity;
+        this.enableMarkerDrag = event.detail.checked;
+        this.dispatchValueChange('enableMarkerDrag', this.enableMarkerDrag ? '$GlobalConstant.True' : '$GlobalConstant.False', 'Boolean');
     }
 }
