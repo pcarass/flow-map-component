@@ -364,17 +364,6 @@ export default class FlowMap extends LightningElement {
                 Street: this.centerStreet
             };
         }
-        // Auto-calculate from markers
-        if (this.filteredMarkers.length > 0) {
-            const lats = this.filteredMarkers.filter(m => m.latitude).map(m => m.latitude);
-            const lngs = this.filteredMarkers.filter(m => m.longitude).map(m => m.longitude);
-            if (lats.length > 0 && lngs.length > 0) {
-                return {
-                    Latitude: lats.reduce((a, b) => a + b, 0) / lats.length,
-                    Longitude: lngs.reduce((a, b) => a + b, 0) / lngs.length
-                };
-            }
-        }
         return null;
     }
     
