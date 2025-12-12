@@ -119,10 +119,12 @@
         <!-- List View Panel -->
         <template lwc:if={showListView}>
             <div class={listContainerClasses}>
-                <!-- Collapse Toggle in Header -->
-                <template lwc:if={showCollapseToggle}>
+                <!-- Collapse Toggle in Header - Always visible -->
+                <template lwc:if={listCollapsible}>
                     <div class="list-header">
-                        <span class="list-header-title">Locations ({markerCount})</span>
+                        <template lwc:if={isListExpanded}>
+                            <span class="list-header-title">Locations ({markerCount})</span>
+                        </template>
                         <lightning-button-icon
                             icon-name={collapseToggleIcon}
                             alternative-text={collapseToggleTitle}
@@ -134,42 +136,45 @@
                     </div>
                 </template>
                 
-                <template lwc:if={isLoading}>
-                    <div class="slds-align_absolute-center slds-p-around_medium">
-                        <lightning-spinner alternative-text="Loading" size="small"></lightning-spinner>
-                    </div>
-                </template>
-                <template lwc:else>
-                    <ul class="marker-list slds-has-dividers_bottom-space">
-                        <template for:each={filteredMarkers} for:item="marker" for:index="index">
-                            <li key={marker.id} 
-                                class={marker.listItemClass}
-                                onclick={handleListItemClick}
-                                data-id={marker.id}
-                                data-index={index}>
-                                <article class="slds-tile slds-tile_board">
-                                    <h3 class="slds-tile__title slds-truncate" title={marker.title}>
-                                        <a href="javascript:void(0);">{marker.title}</a>
-                                    </h3>
-                                    <div class="slds-tile__detail">
-                                        <template lwc:if={marker.description}>
-                                            <p class="slds-text-body_small slds-truncate">{marker.description}</p>
-                                        </template>
-                                        <template lwc:if={marker.address}>
-                                            <p class="slds-text-body_small slds-text-color_weak">
-                                                <lightning-icon icon-name="utility:location" size="xx-small" class="slds-m-right_xx-small"></lightning-icon>
-                                                {marker.address}
-                                            </p>
-                                        </template>
-                                    </div>
-                                </article>
-                            </li>
-                        </template>
-                    </ul>
-                    <template lwc:if={noResults}>
+                <!-- List Content - only shown when expanded -->
+                <template lwc:if={isListExpanded}>
+                    <template lwc:if={isLoading}>
                         <div class="slds-align_absolute-center slds-p-around_medium">
-                            <p class="slds-text-color_weak">No locations found</p>
+                            <lightning-spinner alternative-text="Loading" size="small"></lightning-spinner>
                         </div>
+                    </template>
+                    <template lwc:else>
+                        <ul class="marker-list slds-has-dividers_bottom-space">
+                            <template for:each={filteredMarkers} for:item="marker" for:index="index">
+                                <li key={marker.id} 
+                                    class={marker.listItemClass}
+                                    onclick={handleListItemClick}
+                                    data-id={marker.id}
+                                    data-index={index}>
+                                    <article class="slds-tile slds-tile_board">
+                                        <h3 class="slds-tile__title slds-truncate" title={marker.title}>
+                                            <a href="javascript:void(0);">{marker.title}</a>
+                                        </h3>
+                                        <div class="slds-tile__detail">
+                                            <template lwc:if={marker.description}>
+                                                <p class="slds-text-body_small slds-truncate">{marker.description}</p>
+                                            </template>
+                                            <template lwc:if={marker.address}>
+                                                <p class="slds-text-body_small slds-text-color_weak">
+                                                    <lightning-icon icon-name="utility:location" size="xx-small" class="slds-m-right_xx-small"></lightning-icon>
+                                                    {marker.address}
+                                                </p>
+                                            </template>
+                                        </div>
+                                    </article>
+                                </li>
+                            </template>
+                        </ul>
+                        <template lwc:if={noResults}>
+                            <div class="slds-align_absolute-center slds-p-around_medium">
+                                <p class="slds-text-color_weak">No locations found</p>
+                            </div>
+                        </template>
                     </template>
                 </template>
             </div>
