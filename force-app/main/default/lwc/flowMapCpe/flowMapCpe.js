@@ -164,6 +164,9 @@ export default class FlowMapCpe extends LightningElement {
     // INITIALIZATION
     // ============================================
     
+    // Track if we've done the initial setup
+    _initialSetupComplete = false;
+    
     initializeValues() {
         console.log('FlowMapCpe: initializeValues called with', this._inputVariables?.length || 0, 'variables');
         
@@ -179,7 +182,8 @@ export default class FlowMapCpe extends LightningElement {
         
         console.log('FlowMapCpe: Value map:', JSON.stringify(valueMap));
         
-        // String properties
+        // String properties - only set if value exists in valueMap
+        // This preserves user changes that haven't been saved yet
         const stringProps = [
             'title', 'caption', 'iconName', 'height', 'mapType', 'sourceType',
             'objectApiName', 'queryFilter', 'markersJson', 'titleField', 
@@ -249,10 +253,16 @@ export default class FlowMapCpe extends LightningElement {
         console.log('FlowMapCpe: Field mappings - title:', this.titleField, 'city:', this.cityField, 'street:', this.streetField);
         console.log('FlowMapCpe: List settings - visibility:', this.listViewVisibility, 'position:', this.listPosition);
         
-        // CRITICAL: Dispatch key properties to ensure Flow Builder saves them
-        // This is needed because Flow Builder only saves properties that are explicitly set
-        // If the property isn't in inputVariables, we dispatch the current (default) value
-        this.dispatchDefaultsIfNeeded(valueMap);
+        // CRITICAL: Only dispatch defaults on the FIRST initialization
+        // This prevents race conditions when Flow Builder re-renders after user changes
+        if (!this._initialSetupComplete) {
+            this._initialSetupComplete = true;
+            // Use setTimeout to ensure this happens after the current render cycle
+            // eslint-disable-next-line @lwc/lwc/no-async-operation
+            setTimeout(() => {
+                this.dispatchDefaultsIfNeeded(valueMap);
+            }, 100);
+        }
     }
     
     /**
@@ -260,6 +270,8 @@ export default class FlowMapCpe extends LightningElement {
      * This ensures the properties are saved even if the user doesn't explicitly change them
      */
     dispatchDefaultsIfNeeded(valueMap) {
+        console.log('FlowMapCpe: dispatchDefaultsIfNeeded called');
+        
         // Key properties that must be saved for the component to work correctly
         const keyDefaults = {
             'mapType': this.mapType,
