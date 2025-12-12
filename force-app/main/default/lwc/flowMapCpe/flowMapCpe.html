@@ -7,11 +7,7 @@
             <div class="section-header" data-section="mapType" onclick={toggleSection}>
                 <lightning-icon icon-name="utility:world" size="x-small" class="slds-m-right_x-small"></lightning-icon>
                 <span class="section-title">Map Type</span>
-                <lightning-icon 
-                    icon-name={mapTypeExpanded ? 'utility:chevrondown' : 'utility:chevronright'} 
-                    size="x-small" 
-                    class="chevron-icon">
-                </lightning-icon>
+                <lightning-icon icon-name={mapTypeChevron} size="x-small" class="chevron-icon"></lightning-icon>
             </div>
             <template if:true={mapTypeExpanded}>
                 <div class="section-content">
@@ -46,11 +42,7 @@
             <div class="section-header" data-section="dataSource" onclick={toggleSection}>
                 <lightning-icon icon-name="utility:database" size="x-small" class="slds-m-right_x-small"></lightning-icon>
                 <span class="section-title">Data Source</span>
-                <lightning-icon 
-                    icon-name={dataSourceExpanded ? 'utility:chevrondown' : 'utility:chevronright'} 
-                    size="x-small" 
-                    class="chevron-icon">
-                </lightning-icon>
+                <lightning-icon icon-name={dataSourceChevron} size="x-small" class="chevron-icon"></lightning-icon>
             </div>
             <template if:true={dataSourceExpanded}>
                 <div class="section-content">
@@ -115,11 +107,7 @@
                 <div class="section-header" data-section="fieldMappings" onclick={toggleSection}>
                     <lightning-icon icon-name="utility:text" size="x-small" class="slds-m-right_x-small"></lightning-icon>
                     <span class="section-title">Field Mappings</span>
-                    <lightning-icon 
-                        icon-name={fieldMappingsExpanded ? 'utility:chevrondown' : 'utility:chevronright'} 
-                        size="x-small" 
-                        class="chevron-icon">
-                    </lightning-icon>
+                    <lightning-icon icon-name={fieldMappingsChevron} size="x-small" class="chevron-icon"></lightning-icon>
                 </div>
                 <template if:true={fieldMappingsExpanded}>
                     <div class="section-content">
@@ -249,11 +237,7 @@
             <div class="section-header" data-section="mapCenter" onclick={toggleSection}>
                 <lightning-icon icon-name="utility:location" size="x-small" class="slds-m-right_x-small"></lightning-icon>
                 <span class="section-title">Map Center</span>
-                <lightning-icon 
-                    icon-name={mapCenterExpanded ? 'utility:chevrondown' : 'utility:chevronright'} 
-                    size="x-small" 
-                    class="chevron-icon">
-                </lightning-icon>
+                <lightning-icon icon-name={mapCenterChevron} size="x-small" class="chevron-icon"></lightning-icon>
             </div>
             <template if:true={mapCenterExpanded}>
                 <div class="section-content">
@@ -362,11 +346,7 @@
             <div class="section-header" data-section="markerStyle" onclick={toggleSection}>
                 <lightning-icon icon-name="utility:pin" size="x-small" class="slds-m-right_x-small"></lightning-icon>
                 <span class="section-title">Marker Style</span>
-                <lightning-icon 
-                    icon-name={markerStyleExpanded ? 'utility:chevrondown' : 'utility:chevronright'} 
-                    size="x-small" 
-                    class="chevron-icon">
-                </lightning-icon>
+                <lightning-icon icon-name={markerStyleChevron} size="x-small" class="chevron-icon"></lightning-icon>
             </div>
             <template if:true={markerStyleExpanded}>
                 <div class="section-content">
@@ -428,13 +408,9 @@
         <template if:true={isLeaflet}>
             <div class="slds-card slds-m-bottom_small">
                 <div class="section-header" data-section="clustering" onclick={toggleSection}>
-                    <lightning-icon icon-name="utility:cluster" size="x-small" class="slds-m-right_x-small"></lightning-icon>
+                    <lightning-icon icon-name="utility:groups" size="x-small" class="slds-m-right_x-small"></lightning-icon>
                     <span class="section-title">Clustering</span>
-                    <lightning-icon 
-                        icon-name={clusteringExpanded ? 'utility:chevrondown' : 'utility:chevronright'} 
-                        size="x-small" 
-                        class="chevron-icon">
-                    </lightning-icon>
+                    <lightning-icon icon-name={clusteringChevron} size="x-small" class="chevron-icon"></lightning-icon>
                 </div>
                 <template if:true={clusteringExpanded}>
                     <div class="section-content">
@@ -486,11 +462,7 @@
                 <div class="section-header" data-section="drawing" onclick={toggleSection}>
                     <lightning-icon icon-name="utility:edit" size="x-small" class="slds-m-right_x-small"></lightning-icon>
                     <span class="section-title">Drawing Tools</span>
-                    <lightning-icon 
-                        icon-name={drawingExpanded ? 'utility:chevrondown' : 'utility:chevronright'} 
-                        size="x-small" 
-                        class="chevron-icon">
-                    </lightning-icon>
+                    <lightning-icon icon-name={drawingChevron} size="x-small" class="chevron-icon"></lightning-icon>
                 </div>
                 <template if:true={drawingExpanded}>
                     <div class="section-content">
@@ -576,12 +548,8 @@
         <div class="slds-card slds-m-bottom_small">
             <div class="section-header" data-section="listSearch" onclick={toggleSection}>
                 <lightning-icon icon-name="utility:list" size="x-small" class="slds-m-right_x-small"></lightning-icon>
-                <span class="section-title">List & Search</span>
-                <lightning-icon 
-                    icon-name={listSearchExpanded ? 'utility:chevrondown' : 'utility:chevronright'} 
-                    size="x-small" 
-                    class="chevron-icon">
-                </lightning-icon>
+                <span class="section-title">List and Search</span>
+                <lightning-icon icon-name={listSearchChevron} size="x-small" class="chevron-icon"></lightning-icon>
             </div>
             <template if:true={listSearchExpanded}>
                 <div class="section-content">
@@ -657,12 +625,8 @@
         <div class="slds-card slds-m-bottom_small">
             <div class="section-header" data-section="basic" onclick={toggleSection}>
                 <lightning-icon icon-name="utility:settings" size="x-small" class="slds-m-right_x-small"></lightning-icon>
-                <span class="section-title">Header & Display</span>
-                <lightning-icon 
-                    icon-name={basicExpanded ? 'utility:chevrondown' : 'utility:chevronright'} 
-                    size="x-small" 
-                    class="chevron-icon">
-                </lightning-icon>
+                <span class="section-title">Header and Display</span>
+                <lightning-icon icon-name={basicChevron} size="x-small" class="chevron-icon"></lightning-icon>
             </div>
             <template if:true={basicExpanded}>
                 <div class="section-content">
