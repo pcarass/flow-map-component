@@ -319,4 +319,97 @@ public with sharing class FlowMapController {
         
         return result;
     }
+    
+    /**
+     * @description Gets a list of queryable SObjects for the CPE object picker
+     * @return List of Maps containing label and apiName for each object
+     */
+    @AuraEnabled(cacheable=true)
+    public static List<Map<String, String>> getSObjects() {
+        List<Map<String, String>> objects = new List<Map<String, String>>();
+        
+        // Get commonly used objects that typically have location data
+        List<String> commonObjects = new List<String>{
+            'Account', 'Contact', 'Lead', 'Opportunity', 'Case', 
+            'Asset', 'Order', 'ServiceAppointment', 'WorkOrder',
+            'User', 'Location'
+        };
+        
+        Map<String, Schema.SObjectType> globalDescribe = Schema.getGlobalDescribe();
+        
+        // First add common objects that exist
+        for (String objName : commonObjects) {
+            if (globalDescribe.containsKey(objName)) {
+                Schema.DescribeSObjectResult describeResult = globalDescribe.get(objName).getDescribe();
+                if (describeResult.isQueryable() && describeResult.isAccessible()) {
+                    objects.add(new Map<String, String>{
+                        'label' => describeResult.getLabel(),
+                        'apiName' => describeResult.getName()
+                    });
+                }
+            }
+        }
+        
+        // Then add custom objects
+        for (String objName : globalDescribe.keySet()) {
+            if (objName.endsWith('__c')) {
+                Schema.DescribeSObjectResult describeResult = globalDescribe.get(objName).getDescribe();
+                if (describeResult.isQueryable() && describeResult.isAccessible() && describeResult.isCreateable()) {
+                    objects.add(new Map<String, String>{
+                        'label' => describeResult.getLabel(),
+                        'apiName' => describeResult.getName()
+                    });
+                }
+            }
+        }
+        
+        // Sort by label
+        objects.sort();
+        
+        return objects;
+    }
+    
+    /**
+     * @description Gets the fields for a specific SObject for the CPE field picker
+     * @param objectApiName The API name of the object
+     * @return List of Maps containing label and apiName for each field
+     */
+    @AuraEnabled(cacheable=true)
+    public static List<Map<String, String>> getObjectFields(String objectApiName) {
+        List<Map<String, String>> fields = new List<Map<String, String>>();
+        
+        if (String.isBlank(objectApiName)) {
+            return fields;
+        }
+        
+        try {
+            Schema.SObjectType sObjectType = Schema.getGlobalDescribe().get(objectApiName);
+            if (sObjectType == null) {
+                return fields;
+            }
+            
+            Schema.DescribeSObjectResult describeResult = sObjectType.getDescribe();
+            Map<String, Schema.SObjectField> fieldMap = describeResult.fields.getMap();
+            
+            for (String fieldName : fieldMap.keySet()) {
+                Schema.DescribeFieldResult fieldDescribe = fieldMap.get(fieldName).getDescribe();
+                
+                // Only include accessible fields
+                if (fieldDescribe.isAccessible()) {
+                    fields.add(new Map<String, String>{
+                        'label' => fieldDescribe.getLabel(),
+                        'apiName' => fieldDescribe.getName()
+                    });
+                }
+            }
+            
+            // Sort by label
+            fields.sort();
+            
+        } catch (Exception e) {
+            // Return empty list on error
+        }
+        
+        return fields;
+    }
 }
