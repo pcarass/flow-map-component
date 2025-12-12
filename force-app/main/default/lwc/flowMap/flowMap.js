@@ -23,6 +23,7 @@ export default class FlowMap extends LightningElement {
     
     // Map Type Selection
     @api mapType = 'google'; // 'google' or 'leaflet'
+    @api googleMapStyle = 'roadmap'; // 'roadmap', 'satellite', 'terrain', 'hybrid'
     
     // Data Source Configuration (renamed from dataSourceType)
     @api sourceType = 'query'; // 'manual', 'variable', 'query'
@@ -103,6 +104,14 @@ export default class FlowMap extends LightningElement {
     @api listCollapsible = false;
     
     // Popup customization
+    @api enablePopups = false;
+    @api popupFieldsJson; // JSON array of field API names to show in popup
+    @api showViewRecordAction = true;
+    @api showDirectionsAction = true;
+    @api showCallAction = false;
+    @api phoneField;
+    
+    // Legacy popup properties (kept for backward compatibility)
     @api popupTitleField;
     @api popupDescriptionField;
     @api popupAddressField;
@@ -152,6 +161,8 @@ export default class FlowMap extends LightningElement {
     @track isListCollapsed = false;
     @track dynamicMapCenter = null; // For programmatic centering
     @track drawingMode = null; // 'marker', 'line', 'polygon', 'circle', 'edit', 'delete'
+    @track isPopupOpen = false; // For info popup
+    @track selectedMarkerForPopup = null; // Marker data for popup display
     
     // Internal State
     leafletInitialized = false;
@@ -487,6 +498,133 @@ export default class FlowMap extends LightningElement {
     
     get deleteToolClass() {
         return this.drawingMode === 'delete' ? 'tool-active' : '';
+    }
+    
+    // ============================================
+    // POPUP GETTERS
+    // ============================================
+    
+    get showPopup() {
+        return this.enablePopups && this.isPopupOpen && this.selectedMarkerForPopup;
+    }
+    
+    get popupTitle() {
+        if (!this.selectedMarkerForPopup) return '';
+        return this.selectedMarkerForPopup.title || 'Location Details';
+    }
+    
+    get popupAddress() {
+        if (!this.selectedMarkerForPopup) return '';
+        const m = this.selectedMarkerForPopup;
+        const parts = [m.street, m.city, m.state, m.postalCode, m.country].filter(Boolean);
+        return parts.join(', ') || m.address || '';
+    }
+    
+    get popupFields() {
+        if (!this.selectedMarkerForPopup || !this.popupFieldsJson) return [];
+        
+        try {
+            const fieldNames = JSON.parse(this.popupFieldsJson);
+            const rawData = this.selectedMarkerForPopup.rawData || {};
+            
+            return fieldNames.map((fieldName, index) => {
+                // Get the label from the field name (convert API name to label)
+                const label = this.formatFieldLabel(fieldName);
+                const value = rawData[fieldName] || '';
+                
+                return {
+                    key: `field-${index}`,
+                    label: label,
+                    value: value !== null && value !== undefined ? String(value) : ''
+                };
+            }).filter(f => f.value); // Only show fields with values
+        } catch (e) {
+            console.error('Error parsing popupFieldsJson:', e);
+            return [];
+        }
+    }
+    
+    get showCallActionButton() {
+        if (!this.showCallAction || !this.selectedMarkerForPopup) return false;
+        
+        // Check if we have a phone number
+        const phoneNumber = this.getPhoneNumber();
+        return !!phoneNumber;
+    }
+    
+    formatFieldLabel(fieldName) {
+        // Convert API name to readable label (e.g., "BillingCity" -> "Billing City")
+        if (!fieldName) return '';
+        return fieldName
+            .replace(/__c$/i, '') // Remove custom field suffix
+            .replace(/([A-Z])/g, ' $1') // Add space before capitals
+            .replace(/^./, str => str.toUpperCase()) // Capitalize first letter
+            .trim();
+    }
+    
+    getPhoneNumber() {
+        if (!this.selectedMarkerForPopup) return null;
+        const rawData = this.selectedMarkerForPopup.rawData || {};
+        
+        // If phoneField is specified, use it
+        if (this.phoneField) {
+            return rawData[this.phoneField];
+        }
+        
+        // Otherwise try common phone field names
+        return rawData.Phone || rawData.phone || rawData.MobilePhone || rawData.HomePhone || null;
+    }
+    
+    // ============================================
+    // POPUP HANDLERS
+    // ============================================
+    
+    openPopup(marker) {
+        this.selectedMarkerForPopup = marker;
+        this.isPopupOpen = true;
+    }
+    
+    closePopup() {
+        this.isPopupOpen = false;
+        this.selectedMarkerForPopup = null;
+    }
+    
+    handleViewRecord() {
+        if (!this.selectedMarkerForPopup) return;
+        
+        const recordId = this.selectedMarkerForPopup.id;
+        if (recordId && recordId.length >= 15) {
+            // Open record in new tab
+            window.open(`/${recordId}`, '_blank');
+        }
+    }
+    
+    handleGetDirections() {
+        if (!this.selectedMarkerForPopup) return;
+        
+        const m = this.selectedMarkerForPopup;
+        let destination = '';
+        
+        if (m.latitude && m.longitude) {
+            destination = `${m.latitude},${m.longitude}`;
+        } else {
+            const addressParts = [m.street, m.city, m.state, m.postalCode, m.country].filter(Boolean);
+            destination = addressParts.join(', ');
+        }
+        
+        if (destination) {
+            const mapsUrl = `https://www.google.com/maps/dir/?api=1&destination=${encodeURIComponent(destination)}`;
+            window.open(mapsUrl, '_blank');
+        }
+    }
+    
+    handleCallAction() {
+        const phoneNumber = this.getPhoneNumber();
+        if (phoneNumber) {
+            // Clean the phone number and open tel: link
+            const cleanNumber = phoneNumber.replace(/[^\d+]/g, '');
+            window.open(`tel:${cleanNumber}`, '_self');
+        }
     }
     
     // ============================================
@@ -1040,6 +1178,14 @@ export default class FlowMap extends LightningElement {
     selectMarker(index, markerId) {
         // Prevent re-selection of same marker (avoids unnecessary re-renders)
         if (this.selectedMarkerIndex === index) {
+            // If same marker clicked again and popups enabled, toggle popup
+            if (this.enablePopups && this.filteredMarkers[index]) {
+                if (this.isPopupOpen) {
+                    this.closePopup();
+                } else {
+                    this.openPopup(this.filteredMarkers[index]);
+                }
+            }
             return;
         }
         
@@ -1070,6 +1216,11 @@ export default class FlowMap extends LightningElement {
             } else if (!this.useLeafletMaps) {
                 // Google Maps: Update the center property to pan to the marker
                 this.centerMapOnMarker(marker);
+            }
+            
+            // Open popup if enabled
+            if (this.enablePopups) {
+                this.openPopup(marker);
             }
             
             // Batch dispatch Flow attribute changes to prevent multiple re-renders
