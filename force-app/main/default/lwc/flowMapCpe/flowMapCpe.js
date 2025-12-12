@@ -167,18 +167,15 @@ export default class FlowMapCpe extends LightningElement {
     initializeValues() {
         console.log('FlowMapCpe: initializeValues called with', this._inputVariables?.length || 0, 'variables');
         
-        if (!this._inputVariables || this._inputVariables.length === 0) {
-            console.log('FlowMapCpe: No input variables to initialize');
-            return;
-        }
-        
-        // Build a map for easy access
+        // Build a map for easy access from existing input variables
         const valueMap = {};
-        this._inputVariables.forEach(variable => {
-            if (variable && variable.name !== undefined) {
-                valueMap[variable.name] = variable.value;
-            }
-        });
+        if (this._inputVariables && this._inputVariables.length > 0) {
+            this._inputVariables.forEach(variable => {
+                if (variable && variable.name !== undefined) {
+                    valueMap[variable.name] = variable.value;
+                }
+            });
+        }
         
         console.log('FlowMapCpe: Value map:', JSON.stringify(valueMap));
         
@@ -251,6 +248,33 @@ export default class FlowMapCpe extends LightningElement {
         console.log('FlowMapCpe: Initialized - mapType:', this.mapType, 'sourceType:', this.sourceType, 'objectApiName:', this.objectApiName);
         console.log('FlowMapCpe: Field mappings - title:', this.titleField, 'city:', this.cityField, 'street:', this.streetField);
         console.log('FlowMapCpe: List settings - visibility:', this.listViewVisibility, 'position:', this.listPosition);
+        
+        // CRITICAL: Dispatch key properties to ensure Flow Builder saves them
+        // This is needed because Flow Builder only saves properties that are explicitly set
+        // If the property isn't in inputVariables, we dispatch the current (default) value
+        this.dispatchDefaultsIfNeeded(valueMap);
+    }
+    
+    /**
+     * Dispatch default values for key properties that Flow Builder might not have saved
+     * This ensures the properties are saved even if the user doesn't explicitly change them
+     */
+    dispatchDefaultsIfNeeded(valueMap) {
+        // Key properties that must be saved for the component to work correctly
+        const keyDefaults = {
+            'mapType': this.mapType,
+            'sourceType': this.sourceType,
+            'listViewVisibility': this.listViewVisibility,
+            'listPosition': this.listPosition
+        };
+        
+        // Dispatch any key properties that weren't in the inputVariables
+        Object.entries(keyDefaults).forEach(([prop, value]) => {
+            if (valueMap[prop] === undefined || valueMap[prop] === null) {
+                console.log('FlowMapCpe: Dispatching default for', prop, '=', value);
+                this.dispatchValueChange(prop, value, 'String');
+            }
+        });
     }
     
     parseBooleanValue(value) {
