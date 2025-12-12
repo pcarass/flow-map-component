@@ -165,7 +165,12 @@ export default class FlowMapCpe extends LightningElement {
     // ============================================
     
     initializeValues() {
-        if (!this._inputVariables || this._inputVariables.length === 0) return;
+        console.log('FlowMapCpe: initializeValues called with', this._inputVariables?.length || 0, 'variables');
+        
+        if (!this._inputVariables || this._inputVariables.length === 0) {
+            console.log('FlowMapCpe: No input variables to initialize');
+            return;
+        }
         
         // Build a map for easy access
         const valueMap = {};
@@ -174,6 +179,8 @@ export default class FlowMapCpe extends LightningElement {
                 valueMap[variable.name] = variable.value;
             }
         });
+        
+        console.log('FlowMapCpe: Value map:', JSON.stringify(valueMap));
         
         // String properties
         const stringProps = [
@@ -240,6 +247,10 @@ export default class FlowMapCpe extends LightningElement {
         if (this.objectApiName) {
             this.loadObjectFields();
         }
+        
+        console.log('FlowMapCpe: Initialized - mapType:', this.mapType, 'sourceType:', this.sourceType, 'objectApiName:', this.objectApiName);
+        console.log('FlowMapCpe: Field mappings - title:', this.titleField, 'city:', this.cityField, 'street:', this.streetField);
+        console.log('FlowMapCpe: List settings - visibility:', this.listViewVisibility, 'position:', this.listPosition);
     }
     
     parseBooleanValue(value) {
@@ -327,6 +338,8 @@ export default class FlowMapCpe extends LightningElement {
         // Ensure we have valid values
         const safeValue = (value === undefined || value === null) ? '' : value;
         
+        console.log('FlowMapCpe: Dispatching', name, '=', safeValue, '(', dataType, ')');
+        
         const detail = {
             name: name,
             newValue: safeValue,
@@ -356,7 +369,7 @@ export default class FlowMapCpe extends LightningElement {
     
     get sourceTypeOptions() {
         return [
-            { label: 'SOQL Query', value: 'query' },
+            { label: 'Query', value: 'query' },
             { label: 'Manual JSON', value: 'manual' },
             { label: 'Flow Variable', value: 'variable' }
         ];
