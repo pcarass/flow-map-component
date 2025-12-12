@@ -164,8 +164,12 @@ export default class FlowMapCpe extends LightningElement {
     // INITIALIZATION
     // ============================================
     
-    // Track if we've done the initial setup
-    _initialSetupComplete = false;
+    // Track which properties have been changed by the user in this session
+    // These should NEVER be overwritten by initializeValues
+    _userChangedProps = new Set();
+    
+    // Track if we've done the initial default dispatch
+    _defaultsDispatched = false;
     
     initializeValues() {
         console.log('FlowMapCpe: initializeValues called with', this._inputVariables?.length || 0, 'variables');
@@ -181,9 +185,9 @@ export default class FlowMapCpe extends LightningElement {
         }
         
         console.log('FlowMapCpe: Value map:', JSON.stringify(valueMap));
+        console.log('FlowMapCpe: User changed props:', Array.from(this._userChangedProps));
         
-        // String properties - only set if value exists in valueMap
-        // This preserves user changes that haven't been saved yet
+        // String properties - only set if value exists in valueMap AND user hasn't changed it
         const stringProps = [
             'title', 'caption', 'iconName', 'height', 'mapType', 'sourceType',
             'objectApiName', 'queryFilter', 'markersJson', 'titleField', 
@@ -199,6 +203,11 @@ export default class FlowMapCpe extends LightningElement {
         ];
         
         stringProps.forEach(prop => {
+            // Skip if user has changed this property in this session
+            if (this._userChangedProps.has(prop)) {
+                console.log('FlowMapCpe: Skipping', prop, '- user changed');
+                return;
+            }
             if (valueMap[prop] !== undefined && valueMap[prop] !== null && valueMap[prop] !== '') {
                 this[prop] = String(valueMap[prop]);
             }
@@ -214,6 +223,7 @@ export default class FlowMapCpe extends LightningElement {
         };
         
         Object.keys(intProps).forEach(prop => {
+            if (this._userChangedProps.has(prop)) return;
             if (valueMap[prop] !== undefined && valueMap[prop] !== null) {
                 const parsed = parseInt(valueMap[prop], 10);
                 this[prop] = isNaN(parsed) ? intProps[prop] : parsed;
@@ -230,6 +240,7 @@ export default class FlowMapCpe extends LightningElement {
         ];
         
         boolProps.forEach(prop => {
+            if (this._userChangedProps.has(prop)) return;
             if (valueMap[prop] !== undefined && valueMap[prop] !== null) {
                 this[prop] = this.parseBooleanValue(valueMap[prop]);
             }
@@ -253,10 +264,9 @@ export default class FlowMapCpe extends LightningElement {
         console.log('FlowMapCpe: Field mappings - title:', this.titleField, 'city:', this.cityField, 'street:', this.streetField);
         console.log('FlowMapCpe: List settings - visibility:', this.listViewVisibility, 'position:', this.listPosition);
         
-        // CRITICAL: Only dispatch defaults on the FIRST initialization
-        // This prevents race conditions when Flow Builder re-renders after user changes
-        if (!this._initialSetupComplete) {
-            this._initialSetupComplete = true;
+        // Dispatch defaults only once on first load
+        if (!this._defaultsDispatched) {
+            this._defaultsDispatched = true;
             // Use setTimeout to ensure this happens after the current render cycle
             // eslint-disable-next-line @lwc/lwc/no-async-operation
             setTimeout(() => {
@@ -268,6 +278,7 @@ export default class FlowMapCpe extends LightningElement {
     /**
      * Dispatch default values for key properties that Flow Builder might not have saved
      * This ensures the properties are saved even if the user doesn't explicitly change them
+     * Only dispatches if user hasn't already changed the property
      */
     dispatchDefaultsIfNeeded(valueMap) {
         console.log('FlowMapCpe: dispatchDefaultsIfNeeded called');
@@ -281,7 +292,12 @@ export default class FlowMapCpe extends LightningElement {
         };
         
         // Dispatch any key properties that weren't in the inputVariables
+        // AND haven't been changed by the user
         Object.entries(keyDefaults).forEach(([prop, value]) => {
+            if (this._userChangedProps.has(prop)) {
+                console.log('FlowMapCpe: Skipping default dispatch for', prop, '- user changed');
+                return;
+            }
             if (valueMap[prop] === undefined || valueMap[prop] === null) {
                 console.log('FlowMapCpe: Dispatching default for', prop, '=', value);
                 this.dispatchValueChange(prop, value, 'String');
@@ -569,12 +585,14 @@ export default class FlowMapCpe extends LightningElement {
     // Map Type
     handleMapTypeChange(event) {
         this.mapType = event.detail.value;
+        this._userChangedProps.add('mapType');
         this.dispatchValueChange('mapType', this.mapType, 'String');
     }
     
     // Data Source
     handleSourceTypeChange(event) {
         this.sourceType = event.detail.value;
+        this._userChangedProps.add('sourceType');
         this.dispatchValueChange('sourceType', this.sourceType, 'String');
     }
     
@@ -804,11 +822,13 @@ export default class FlowMapCpe extends LightningElement {
     // List & Search
     handleListViewVisibilityChange(event) {
         this.listViewVisibility = event.detail.value;
+        this._userChangedProps.add('listViewVisibility');
         this.dispatchValueChange('listViewVisibility', this.listViewVisibility, 'String');
     }
     
     handleListPositionChange(event) {
         this.listPosition = event.detail.value;
+        this._userChangedProps.add('listPosition');
         this.dispatchValueChange('listPosition', this.listPosition, 'String');
     }
     
