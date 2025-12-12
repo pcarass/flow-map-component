@@ -352,67 +352,108 @@
         </div>
 
         <!-- ============================================ -->
-        <!-- MARKER STYLE SECTION -->
+        <!-- GOOGLE MAPS OPTIONS (GOOGLE ONLY) -->
         <!-- ============================================ -->
-        <div class="slds-card slds-m-bottom_small">
-            <div class="section-header" data-section="markerStyle" onclick={toggleSection}>
-                <lightning-icon icon-name="utility:pin" size="x-small" class="slds-m-right_x-small"></lightning-icon>
-                <span class="section-title">Marker Style</span>
-                <lightning-icon icon-name={markerStyleChevron} size="x-small" class="chevron-icon"></lightning-icon>
-            </div>
-            <template if:true={markerStyleExpanded}>
-                <div class="section-content">
-                    <lightning-combobox
-                        name="markerType"
-                        label="Marker Type"
-                        value={markerType}
-                        options={markerTypeOptions}
-                        onchange={handleMarkerTypeChange}>
-                    </lightning-combobox>
-
-                    <template if:true={showMarkerColorOptions}>
-                        <div class="slds-grid slds-gutters_x-small slds-m-top_small">
-                            <div class="slds-col slds-size_1-of-2">
-                                <lightning-input
-                                    type="color"
-                                    label="Fill Color"
-                                    value={markerFillColor}
-                                    onchange={handleMarkerFillColorChange}>
-                                </lightning-input>
-                            </div>
-                            <div class="slds-col slds-size_1-of-2">
-                                <lightning-input
-                                    type="color"
-                                    label="Stroke Color"
-                                    value={markerStrokeColor}
-                                    onchange={handleMarkerStrokeColorChange}>
-                                </lightning-input>
-                            </div>
-                        </div>
-
-                        <lightning-input
-                            type="number"
-                            label="Marker Radius"
-                            value={markerRadius}
-                            min="5"
-                            max="50"
-                            onchange={handleMarkerRadiusChange}
-                            class="slds-m-top_small">
-                        </lightning-input>
-                    </template>
-
-                    <template if:true={showCustomIconOptions}>
-                        <lightning-textarea
-                            label="Custom Icon SVG"
-                            value={customIconSvg}
-                            placeholder="Enter SVG markup for custom icon"
-                            onchange={handleCustomIconSvgChange}
-                            class="slds-m-top_small">
-                        </lightning-textarea>
-                    </template>
+        <template if:true={isGoogleMaps}>
+            <div class="slds-card slds-m-bottom_small">
+                <div class="section-header" data-section="googleOptions" onclick={toggleSection}>
+                    <lightning-icon icon-name="utility:world" size="x-small" class="slds-m-right_x-small"></lightning-icon>
+                    <span class="section-title">Google Maps Options</span>
+                    <lightning-icon icon-name={googleOptionsChevron} size="x-small" class="chevron-icon"></lightning-icon>
                 </div>
-            </template>
-        </div>
+                <template if:true={googleOptionsExpanded}>
+                    <div class="section-content">
+                        <lightning-combobox
+                            name="googleMapStyle"
+                            label="Map Style"
+                            value={googleMapStyle}
+                            options={googleMapStyleOptions}
+                            onchange={handleGoogleMapStyleChange}>
+                        </lightning-combobox>
+                        
+                        <div class="slds-box slds-box_x-small slds-theme_info slds-m-top_small">
+                            <p class="slds-text-body_small">
+                                <lightning-icon icon-name="utility:info" size="xx-small" class="slds-m-right_xx-small"></lightning-icon>
+                                <strong>Google Maps Limitations:</strong>
+                            </p>
+                            <ul class="slds-list_dotted slds-text-body_small slds-m-top_xx-small">
+                                <li>Maximum ~100 markers recommended</li>
+                                <li>Custom marker colors not supported</li>
+                                <li>No clustering or drawing tools</li>
+                            </ul>
+                            <p class="slds-text-body_small slds-m-top_xx-small">
+                                Switch to <strong>Leaflet</strong> for advanced features.
+                            </p>
+                        </div>
+                    </div>
+                </template>
+            </div>
+        </template>
+
+        <!-- ============================================ -->
+        <!-- MARKER STYLE SECTION (LEAFLET ONLY) -->
+        <!-- ============================================ -->
+        <template if:true={isLeaflet}>
+            <div class="slds-card slds-m-bottom_small">
+                <div class="section-header" data-section="markerStyle" onclick={toggleSection}>
+                    <lightning-icon icon-name="utility:pin" size="x-small" class="slds-m-right_x-small"></lightning-icon>
+                    <span class="section-title">Marker Style</span>
+                    <lightning-icon icon-name={markerStyleChevron} size="x-small" class="chevron-icon"></lightning-icon>
+                </div>
+                <template if:true={markerStyleExpanded}>
+                    <div class="section-content">
+                        <lightning-combobox
+                            name="markerType"
+                            label="Marker Type"
+                            value={markerType}
+                            options={markerTypeOptions}
+                            onchange={handleMarkerTypeChange}>
+                        </lightning-combobox>
+
+                        <template if:true={showMarkerColorOptions}>
+                            <div class="slds-grid slds-gutters_x-small slds-m-top_small">
+                                <div class="slds-col slds-size_1-of-2">
+                                    <lightning-input
+                                        type="color"
+                                        label="Fill Color"
+                                        value={markerFillColor}
+                                        onchange={handleMarkerFillColorChange}>
+                                    </lightning-input>
+                                </div>
+                                <div class="slds-col slds-size_1-of-2">
+                                    <lightning-input
+                                        type="color"
+                                        label="Stroke Color"
+                                        value={markerStrokeColor}
+                                        onchange={handleMarkerStrokeColorChange}>
+                                    </lightning-input>
+                                </div>
+                            </div>
+
+                            <lightning-input
+                                type="number"
+                                label="Marker Radius"
+                                value={markerRadius}
+                                min="5"
+                                max="50"
+                                onchange={handleMarkerRadiusChange}
+                                class="slds-m-top_small">
+                            </lightning-input>
+                        </template>
+
+                        <template if:true={showCustomIconOptions}>
+                            <lightning-textarea
+                                label="Custom Icon SVG"
+                                value={customIconSvg}
+                                placeholder="Enter SVG markup for custom icon"
+                                onchange={handleCustomIconSvgChange}
+                                class="slds-m-top_small">
+                            </lightning-textarea>
+                        </template>
+                    </div>
+                </template>
+            </div>
+        </template>
 
         <!-- ============================================ -->
         <!-- CLUSTERING SECTION (LEAFLET ONLY) -->
@@ -626,6 +667,82 @@
                             onchange={handleEnableMarkerDragChange}
                             class="slds-m-top_medium">
                         </lightning-input>
+                    </template>
+                </div>
+            </template>
+        </div>
+
+        <!-- ============================================ -->
+        <!-- POPUP CONFIGURATION SECTION -->
+        <!-- ============================================ -->
+        <div class="slds-card slds-m-bottom_small">
+            <div class="section-header" data-section="popup" onclick={toggleSection}>
+                <lightning-icon icon-name="utility:info" size="x-small" class="slds-m-right_x-small"></lightning-icon>
+                <span class="section-title">Marker Popups</span>
+                <lightning-icon icon-name={popupChevron} size="x-small" class="chevron-icon"></lightning-icon>
+            </div>
+            <template if:true={popupExpanded}>
+                <div class="section-content">
+                    <lightning-input
+                        type="checkbox"
+                        label="Enable Info Popups"
+                        checked={enablePopups}
+                        onchange={handleEnablePopupsChange}>
+                    </lightning-input>
+                    <p class="slds-text-body_small slds-text-color_weak slds-m-top_xx-small">
+                        Show a popup with details when clicking a marker
+                    </p>
+
+                    <template if:true={enablePopups}>
+                        <lightning-textarea
+                            label="Popup Fields"
+                            value={popupFieldsJson}
+                            placeholder='["Name", "Phone", "BillingCity"]'
+                            onchange={handlePopupFieldsChange}
+                            class="slds-m-top_small">
+                        </lightning-textarea>
+                        <p class="slds-text-body_small slds-text-color_weak">
+                            JSON array of field API names to display in popup
+                        </p>
+
+                        <div class="slds-m-top_medium">
+                            <p class="slds-text-title_caps slds-m-bottom_x-small">Quick Actions</p>
+                            
+                            <lightning-input
+                                type="checkbox"
+                                label="Show 'View Record' Button"
+                                checked={showViewRecordAction}
+                                onchange={handleShowViewRecordActionChange}>
+                            </lightning-input>
+
+                            <lightning-input
+                                type="checkbox"
+                                label="Show 'Get Directions' Button"
+                                checked={showDirectionsAction}
+                                onchange={handleShowDirectionsActionChange}
+                                class="slds-m-top_x-small">
+                            </lightning-input>
+
+                            <lightning-input
+                                type="checkbox"
+                                label="Show 'Call' Button"
+                                checked={showCallAction}
+                                onchange={handleShowCallActionChange}
+                                class="slds-m-top_x-small">
+                            </lightning-input>
+
+                            <template if:true={showCallAction}>
+                                <lightning-combobox
+                                    name="phoneField"
+                                    label="Phone Field"
+                                    value={phoneField}
+                                    options={fieldOptions}
+                                    onchange={handlePhoneFieldChange}
+                                    placeholder="Select phone field..."
+                                    class="slds-m-top_small">
+                                </lightning-combobox>
+                            </template>
+                        </div>
                     </template>
                 </div>
             </template>
