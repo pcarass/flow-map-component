@@ -106,8 +106,8 @@ export default class FlowMap extends LightningElement {
     // Popup customization
     @api enablePopups = false;
     @api popupFieldsJson; // JSON array of field API names to show in popup
-    @api showViewRecordAction = true;
-    @api showDirectionsAction = true;
+    @api showViewRecordAction = false; // Default true via meta.xml
+    @api showDirectionsAction = false; // Default true via meta.xml
     @api showCallAction = false;
     @api phoneField;
     
@@ -550,6 +550,18 @@ export default class FlowMap extends LightningElement {
         // Check if we have a phone number
         const phoneNumber = this.getPhoneNumber();
         return !!phoneNumber;
+    }
+    
+    // Default to true for View Record action (only false if explicitly set to false)
+    get showViewRecordButton() {
+        // If explicitly set to false, return false; otherwise default to true
+        return this.showViewRecordAction !== false;
+    }
+    
+    // Default to true for Directions action (only false if explicitly set to false)
+    get showDirectionsButton() {
+        // If explicitly set to false, return false; otherwise default to true
+        return this.showDirectionsAction !== false;
     }
     
     formatFieldLabel(fieldName) {
