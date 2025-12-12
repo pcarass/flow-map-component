@@ -168,6 +168,16 @@ export default class FlowMap extends LightningElement {
     // ============================================
     
     connectedCallback() {
+        console.log('FlowMap: connectedCallback');
+        console.log('FlowMap: mapType =', this.mapType);
+        console.log('FlowMap: sourceType =', this.sourceType);
+        console.log('FlowMap: objectApiName =', this.objectApiName);
+        console.log('FlowMap: titleField =', this.titleField);
+        console.log('FlowMap: streetField =', this.streetField);
+        console.log('FlowMap: cityField =', this.cityField);
+        console.log('FlowMap: latitudeField =', this.latitudeField);
+        console.log('FlowMap: longitudeField =', this.longitudeField);
+        console.log('FlowMap: listViewVisibility =', this.listViewVisibility);
         this.loadMapData();
     }
     
@@ -448,6 +458,9 @@ export default class FlowMap extends LightningElement {
         } catch (error) {
             this.errorMessage = this.extractErrorMessage(error);
             console.error('Error loading map data:', error);
+            console.error('Error details - body:', error?.body);
+            console.error('Error details - message:', error?.message);
+            console.error('Error details - stack:', error?.stack);
         } finally {
             this.isLoading = false;
         }
