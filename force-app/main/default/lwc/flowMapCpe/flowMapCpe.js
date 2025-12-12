@@ -349,8 +349,8 @@ export default class FlowMapCpe extends LightningElement {
     
     get mapTypeOptions() {
         return [
-            { label: 'Google Maps', value: 'google' },
-            { label: 'Leaflet (Clustering & Drawing)', value: 'leaflet' }
+            { label: 'Google', value: 'google' },
+            { label: 'Leaflet', value: 'leaflet' }
         ];
     }
     
