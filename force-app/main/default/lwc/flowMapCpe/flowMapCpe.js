@@ -314,15 +314,22 @@ export default class FlowMapCpe extends LightningElement {
             return;
         }
         
+        console.log('FlowMapCpe: Loading fields for', this.objectApiName);
         this.isLoadingFields = true;
+        
+        // Auto-expand Field Mappings section when object is selected
+        this.expandedSections.fieldMappings = true;
+        
         try {
             const fields = await getObjectFields({ objectApiName: this.objectApiName });
+            console.log('FlowMapCpe: Loaded', fields?.length || 0, 'fields');
             this.fieldOptions = fields.map(field => ({
                 label: field.label,
                 value: field.apiName
             }));
         } catch (error) {
             console.error('Error loading fields:', error);
+            console.error('Error details:', JSON.stringify(error));
             this.fieldOptions = [];
         } finally {
             this.isLoadingFields = false;
