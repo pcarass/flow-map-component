@@ -366,10 +366,16 @@ export default class FlowMap extends LightningElement {
     
     // Cached map center - only set once during initialization
     @track _cachedMapCenter = null;
+    @track _dynamicMapCenter = null; // Set when user selects a marker from list
     _mapCenterInitialized = false;
     
     get mapCenter() {
-        // Only calculate once - after that, return the cached value
+        // If a marker was selected from the list, center on that marker
+        if (this._dynamicMapCenter) {
+            return this._dynamicMapCenter;
+        }
+        
+        // Only calculate initial center once - after that, return the cached value
         // This prevents the map from resetting when other props change
         if (this._mapCenterInitialized) {
             return this._cachedMapCenter;
@@ -398,6 +404,31 @@ export default class FlowMap extends LightningElement {
         this._mapCenterInitialized = true;
         console.log('FlowMap: Initialized mapCenter:', this._cachedMapCenter);
         return this._cachedMapCenter;
+    }
+    
+    /**
+     * Center the map on a specific marker (used when clicking list items)
+     */
+    centerMapOnMarker(marker) {
+        if (!marker) return;
+        
+        if (marker.latitude && marker.longitude) {
+            this._dynamicMapCenter = {
+                Latitude: parseFloat(marker.latitude),
+                Longitude: parseFloat(marker.longitude)
+            };
+            console.log('FlowMap: Centering map on marker:', marker.title, this._dynamicMapCenter);
+        } else if (marker.city || marker.country || marker.street) {
+            // Use address-based centering
+            this._dynamicMapCenter = {
+                City: marker.city,
+                State: marker.state,
+                PostalCode: marker.postalCode,
+                Country: marker.country,
+                Street: marker.street
+            };
+            console.log('FlowMap: Centering map on address:', marker.title, this._dynamicMapCenter);
+        }
     }
     
     get showDrawingToolbar() {
@@ -1032,12 +1063,14 @@ export default class FlowMap extends LightningElement {
             // Update list styling immediately
             this.applyMarkerListClasses();
             
-            // Center map on selected marker (Leaflet only - Google Maps handles this automatically)
+            // Center map on selected marker
             if (this.useLeafletMaps && this.leafletMap && marker.latitude && marker.longitude) {
+                // Leaflet: Use setView to pan and zoom
                 this.leafletMap.setView([marker.latitude, marker.longitude], this.zoomLevel || 14);
+            } else if (!this.useLeafletMaps) {
+                // Google Maps: Update the center property to pan to the marker
+                this.centerMapOnMarker(marker);
             }
-            // Note: For Google Maps, the lightning-map component handles marker selection
-            // and centering automatically via the selected-marker-value attribute
             
             // Batch dispatch Flow attribute changes to prevent multiple re-renders
             Promise.resolve().then(() => {
