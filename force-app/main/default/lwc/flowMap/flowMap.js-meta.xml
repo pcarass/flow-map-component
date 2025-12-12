@@ -22,14 +22,12 @@
             <!-- MAP TYPE SELECTION -->
             <!-- ============================================ -->
             <property name="mapType" type="String" label="Map Type" default="google" 
-                      datasource="google,leaflet"
                       description="Select Google Maps (max 100 markers) or Leaflet (unlimited markers, clustering, drawing)"/>
             
             <!-- ============================================ -->
             <!-- DATA SOURCE CONFIGURATION -->
             <!-- ============================================ -->
             <property name="sourceType" type="String" label="Data Source Type" default="query" 
-                      datasource="manual,variable,query"
                       description="How to populate markers: Manual (JSON), Variable (Flow variable), or Query (SOQL)"/>
             <property name="objectApiName" type="String" label="Object API Name" 
                       description="The Salesforce object to query for markers (e.g., Account, Contact, Custom__c)"/>
@@ -91,7 +89,6 @@
             <!-- MARKER CONFIGURATION -->
             <!-- ============================================ -->
             <property name="markerType" type="String" label="Marker Type" default="default" 
-                      datasource="default,circle,rectangle,polygon,pin,customIcon"
                       description="The type of marker to display on the map"/>
             <property name="markerFillColor" type="String" label="Marker Fill Color" default="#EA4335" 
                       description="Fill color for markers (hex code)"/>
@@ -140,7 +137,6 @@
             <property name="drawToolDelete" type="Boolean" label="Draw Tool: Delete" default="false" 
                       description="Enable delete mode for shapes"/>
             <property name="drawToolbarPosition" type="String" label="Drawing Toolbar Position" default="topright" 
-                      datasource="topleft,topright,bottomleft,bottomright"
                       description="Position of the drawing toolbar"/>
             
             <!-- ============================================ -->
@@ -170,10 +166,8 @@
             <!-- LIST VIEW CONFIGURATION -->
             <!-- ============================================ -->
             <property name="listViewVisibility" type="String" label="List View" default="auto" 
-                      datasource="visible,hidden,auto"
                       description="Show location list: visible (always), hidden (never), auto (when multiple markers)"/>
             <property name="listPosition" type="String" label="List Position" default="left" 
-                      datasource="left,right"
                       description="Position of the list panel: left or right of the map"/>
             <property name="listCollapsible" type="Boolean" label="List Collapsible" default="false" 
                       description="Allow users to collapse the list panel"/>
@@ -187,7 +181,6 @@
                       default="Search locations..." 
                       description="Placeholder text for the search input"/>
             <property name="searchPosition" type="String" label="Search Position" default="right" 
-                      datasource="left,right,center,fill"
                       description="Position of the search bar in the header"/>
             
             <!-- ============================================ -->
