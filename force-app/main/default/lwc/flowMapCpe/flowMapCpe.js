@@ -135,6 +135,17 @@ export default class FlowMapCpe extends LightningElement {
     // Marker Drag
     @track enableMarkerDrag = false;
     
+    // Google Maps Options
+    @track googleMapStyle = 'roadmap';
+    
+    // Popup Configuration
+    @track enablePopups = false;
+    @track popupFieldsJson = '';
+    @track showViewRecordAction = true;
+    @track showDirectionsAction = true;
+    @track showCallAction = false;
+    @track phoneField = '';
+    
     // UI State
     @track objectOptions = [];
     @track fieldOptions = [];
@@ -146,10 +157,12 @@ export default class FlowMapCpe extends LightningElement {
         dataSource: true,
         fieldMappings: false,
         mapCenter: false,
+        googleOptions: false,
         markerStyle: false,
         clustering: false,
         drawing: false,
-        listSearch: false
+        listSearch: false,
+        popup: false
     };
     
     // ============================================
@@ -196,7 +209,8 @@ export default class FlowMapCpe extends LightningElement {
             'markerScale', 'customIconSvg', 'drawToolbarPosition', 'geoJsonValue',
             'drawContentDocumentId', 'contentDocumentLinkedEntityId', 'contentDocumentId',
             'contentDocumentTitle', 'listViewVisibility', 'listPosition', 'searchPlaceholder',
-            'searchPosition', 'filterFieldsJson', 'headerButtonsJson', 'disableClusteringAtZoom'
+            'searchPosition', 'filterFieldsJson', 'headerButtonsJson', 'disableClusteringAtZoom',
+            'googleMapStyle', 'popupFieldsJson', 'phoneField'
         ];
         
         stringProps.forEach(prop => {
@@ -233,7 +247,8 @@ export default class FlowMapCpe extends LightningElement {
             'enableDrawing', 'drawToolMarker', 'drawToolLine', 'drawToolPolygon',
             'drawToolCircle', 'drawToolEdit', 'drawToolDelete', 'saveAsContentDocument',
             'autoSaveContentDocument', 'isSearchable', 'showFilterOption', 'enableMarkerDrag',
-            'listCollapsible'
+            'listCollapsible', 'enablePopups', 'showViewRecordAction', 'showDirectionsAction',
+            'showCallAction'
         ];
         
         boolProps.forEach(prop => {
@@ -444,6 +459,15 @@ export default class FlowMapCpe extends LightningElement {
         ];
     }
     
+    get googleMapStyleOptions() {
+        return [
+            { label: 'Roadmap', value: 'roadmap' },
+            { label: 'Satellite', value: 'satellite' },
+            { label: 'Terrain', value: 'terrain' },
+            { label: 'Hybrid', value: 'hybrid' }
+        ];
+    }
+    
     // ============================================
     // UI STATE GETTERS
     // ============================================
@@ -497,10 +521,12 @@ export default class FlowMapCpe extends LightningElement {
     get dataSourceExpanded() { return this.expandedSections.dataSource; }
     get fieldMappingsExpanded() { return this.expandedSections.fieldMappings; }
     get mapCenterExpanded() { return this.expandedSections.mapCenter; }
+    get googleOptionsExpanded() { return this.expandedSections.googleOptions; }
     get markerStyleExpanded() { return this.expandedSections.markerStyle; }
     get clusteringExpanded() { return this.expandedSections.clustering; }
     get drawingExpanded() { return this.expandedSections.drawing; }
     get listSearchExpanded() { return this.expandedSections.listSearch; }
+    get popupExpanded() { return this.expandedSections.popup; }
     
     // Chevron icons for sections
     get basicChevron() { return this.expandedSections.basic ? 'utility:chevrondown' : 'utility:chevronright'; }
@@ -508,10 +534,12 @@ export default class FlowMapCpe extends LightningElement {
     get dataSourceChevron() { return this.expandedSections.dataSource ? 'utility:chevrondown' : 'utility:chevronright'; }
     get fieldMappingsChevron() { return this.expandedSections.fieldMappings ? 'utility:chevrondown' : 'utility:chevronright'; }
     get mapCenterChevron() { return this.expandedSections.mapCenter ? 'utility:chevrondown' : 'utility:chevronright'; }
+    get googleOptionsChevron() { return this.expandedSections.googleOptions ? 'utility:chevrondown' : 'utility:chevronright'; }
     get markerStyleChevron() { return this.expandedSections.markerStyle ? 'utility:chevrondown' : 'utility:chevronright'; }
     get clusteringChevron() { return this.expandedSections.clustering ? 'utility:chevrondown' : 'utility:chevronright'; }
     get drawingChevron() { return this.expandedSections.drawing ? 'utility:chevrondown' : 'utility:chevronright'; }
     get listSearchChevron() { return this.expandedSections.listSearch ? 'utility:chevrondown' : 'utility:chevronright'; }
+    get popupChevron() { return this.expandedSections.popup ? 'utility:chevrondown' : 'utility:chevronright'; }
     
     // ============================================
     // INPUT CHANGE HANDLERS
@@ -821,5 +849,43 @@ export default class FlowMapCpe extends LightningElement {
     handleEnableMarkerDragChange(event) {
         this.enableMarkerDrag = event.detail.checked;
         this.dispatchValueChange('enableMarkerDrag', this.enableMarkerDrag ? '$GlobalConstant.True' : '$GlobalConstant.False', 'Boolean');
+    }
+    
+    // Google Maps Options
+    handleGoogleMapStyleChange(event) {
+        this.googleMapStyle = event.detail.value;
+        this._userChangedProps.add('googleMapStyle');
+        this.dispatchValueChange('googleMapStyle', this.googleMapStyle, 'String');
+    }
+    
+    // Popup Configuration
+    handleEnablePopupsChange(event) {
+        this.enablePopups = event.detail.checked;
+        this.dispatchValueChange('enablePopups', this.enablePopups ? '$GlobalConstant.True' : '$GlobalConstant.False', 'Boolean');
+    }
+    
+    handlePopupFieldsChange(event) {
+        this.popupFieldsJson = event.detail.value;
+        this.dispatchValueChange('popupFieldsJson', this.popupFieldsJson, 'String');
+    }
+    
+    handleShowViewRecordActionChange(event) {
+        this.showViewRecordAction = event.detail.checked;
+        this.dispatchValueChange('showViewRecordAction', this.showViewRecordAction ? '$GlobalConstant.True' : '$GlobalConstant.False', 'Boolean');
+    }
+    
+    handleShowDirectionsActionChange(event) {
+        this.showDirectionsAction = event.detail.checked;
+        this.dispatchValueChange('showDirectionsAction', this.showDirectionsAction ? '$GlobalConstant.True' : '$GlobalConstant.False', 'Boolean');
+    }
+    
+    handleShowCallActionChange(event) {
+        this.showCallAction = event.detail.checked;
+        this.dispatchValueChange('showCallAction', this.showCallAction ? '$GlobalConstant.True' : '$GlobalConstant.False', 'Boolean');
+    }
+    
+    handlePhoneFieldChange(event) {
+        this.phoneField = event.detail.value;
+        this.dispatchValueChange('phoneField', this.phoneField, 'String');
     }
 }
