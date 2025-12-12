@@ -227,6 +227,7 @@ export default class FlowMap extends LightningElement {
         if (this.listPosition === 'right') {
             classes += ' list-right';
         }
+        console.log('FlowMap: mainContainerClasses =', classes, '| listPosition =', this.listPosition);
         return classes;
     }
     
@@ -321,51 +322,82 @@ export default class FlowMap extends LightningElement {
         return this.filteredMarkers.length === 0 && !this.isLoading;
     }
     
+    // Cached Google Map markers - only recalculate when markers data actually changes
+    @track _cachedGoogleMapMarkers = [];
+    _lastMarkersHash = '';
+    
     get googleMapMarkers() {
-        return this.filteredMarkers.map(m => ({
-            location: {
-                Latitude: m.latitude,
-                Longitude: m.longitude,
-                Street: m.street,
-                City: m.city,
-                State: m.state,
-                PostalCode: m.postalCode,
-                Country: m.country
-            },
-            title: m.title,
-            description: m.description,
-            value: m.id,
-            icon: this.getMarkerIcon(m)
-        }));
+        // Create a simple hash of marker IDs to detect actual data changes
+        const currentHash = this.filteredMarkers.map(m => m.id).join(',');
+        
+        // Only recalculate if marker data actually changed
+        if (currentHash !== this._lastMarkersHash) {
+            this._lastMarkersHash = currentHash;
+            this._cachedGoogleMapMarkers = this.filteredMarkers.map(m => ({
+                location: {
+                    Latitude: m.latitude,
+                    Longitude: m.longitude,
+                    Street: m.street,
+                    City: m.city,
+                    State: m.state,
+                    PostalCode: m.postalCode,
+                    Country: m.country
+                },
+                title: m.title,
+                description: m.description,
+                value: m.id,
+                icon: this.getMarkerIcon(m)
+            }));
+            console.log('FlowMap: Rebuilt googleMapMarkers cache, count:', this._cachedGoogleMapMarkers.length);
+        }
+        
+        return this._cachedGoogleMapMarkers;
     }
+    
+    @track _selectedMarkerValue = null;
     
     get selectedMarkerValue() {
-        if (this.selectedMarkerIndex >= 0 && this.filteredMarkers[this.selectedMarkerIndex]) {
-            return this.filteredMarkers[this.selectedMarkerIndex].id;
-        }
-        return null;
+        return this._selectedMarkerValue;
     }
     
+    set selectedMarkerValue(value) {
+        this._selectedMarkerValue = value;
+    }
+    
+    // Cached map center - only set once during initialization
+    @track _cachedMapCenter = null;
+    _mapCenterInitialized = false;
+    
     get mapCenter() {
+        // Only calculate once - after that, return the cached value
+        // This prevents the map from resetting when other props change
+        if (this._mapCenterInitialized) {
+            return this._cachedMapCenter;
+        }
+        
         // For Google Maps: Return null to let lightning-map auto-fit to all markers
         // Only override if user explicitly set a center location
         if (this.centerLatitude && this.centerLongitude) {
-            return {
+            this._cachedMapCenter = {
                 Latitude: parseFloat(this.centerLatitude),
                 Longitude: parseFloat(this.centerLongitude)
             };
-        }
-        if (this.centerCity || this.centerCountry) {
-            return {
+        } else if (this.centerCity || this.centerCountry) {
+            this._cachedMapCenter = {
                 City: this.centerCity,
                 State: this.centerState,
                 PostalCode: this.centerPostalCode,
                 Country: this.centerCountry,
                 Street: this.centerStreet
             };
+        } else {
+            // Return null - let lightning-map auto-fit to markers
+            this._cachedMapCenter = null;
         }
-        // Return null - let lightning-map auto-fit to markers
-        return null;
+        
+        this._mapCenterInitialized = true;
+        console.log('FlowMap: Initialized mapCenter:', this._cachedMapCenter);
+        return this._cachedMapCenter;
     }
     
     get showDrawingToolbar() {
@@ -956,11 +988,13 @@ export default class FlowMap extends LightningElement {
     handleListItemClick(event) {
         const index = parseInt(event.currentTarget.dataset.index, 10);
         const markerId = event.currentTarget.dataset.id;
+        console.log('FlowMap: List item clicked - index:', index, 'markerId:', markerId);
         this.selectMarker(index, markerId);
     }
     
     handleGoogleMarkerSelect(event) {
         const selectedValue = event.detail.selectedMarkerValue;
+        console.log('FlowMap: Google marker selected - value:', selectedValue);
         const index = this.filteredMarkers.findIndex(m => m.id === selectedValue);
         if (index >= 0) {
             this.selectMarker(index, selectedValue);
@@ -978,6 +1012,8 @@ export default class FlowMap extends LightningElement {
             return;
         }
         
+        console.log('FlowMap: selectMarker called - index:', index, 'markerId:', markerId);
+        
         this.selectedMarkerIndex = index;
         const marker = this.filteredMarkers[index];
         
@@ -988,6 +1024,10 @@ export default class FlowMap extends LightningElement {
             this.selectedMarkerLatitude = marker.latitude;
             this.selectedMarkerLongitude = marker.longitude;
             this.selectedMarkerData = JSON.stringify(marker.rawData);
+            
+            // Update selected marker value for Google Maps binding
+            // This triggers the lightning-map to highlight/select the marker
+            this._selectedMarkerValue = marker.id;
             
             // Update list styling immediately
             this.applyMarkerListClasses();
