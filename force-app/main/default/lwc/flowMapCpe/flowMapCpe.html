@@ -138,34 +138,46 @@
                         <!-- Location Fields -->
                         <div class="field-group slds-m-top_small">
                             <p class="field-group-title">Location Fields</p>
-                            <template if:true={isLeaflet}>
-                                <div class="slds-grid slds-gutters_x-small">
-                                    <div class="slds-col slds-size_1-of-2">
-                                        <lightning-combobox
-                                            name="latitudeField"
-                                            label="Latitude Field"
-                                            placeholder="Select field..."
-                                            value={latitudeField}
-                                            options={fieldOptions}
-                                            onchange={handleLatitudeFieldChange}
-                                            disabled={isLoadingFields}>
-                                        </lightning-combobox>
-                                    </div>
-                                    <div class="slds-col slds-size_1-of-2">
-                                        <lightning-combobox
-                                            name="longitudeField"
-                                            label="Longitude Field"
-                                            placeholder="Select field..."
-                                            value={longitudeField}
-                                            options={fieldOptions}
-                                            onchange={handleLongitudeFieldChange}
-                                            disabled={isLoadingFields}>
-                                        </lightning-combobox>
-                                    </div>
+                            
+                            <!-- Lat/Long fields - show for both map types -->
+                            <p class="slds-text-body_small slds-text-color_weak slds-m-bottom_x-small">
+                                <template if:true={isGoogleMaps}>
+                                    Use either Lat/Long OR Address fields below
+                                </template>
+                                <template if:true={isLeaflet}>
+                                    Latitude and Longitude are required for Leaflet
+                                </template>
+                            </p>
+                            <div class="slds-grid slds-gutters_x-small">
+                                <div class="slds-col slds-size_1-of-2">
+                                    <lightning-combobox
+                                        name="latitudeField"
+                                        label="Latitude Field"
+                                        placeholder="Select field..."
+                                        value={latitudeField}
+                                        options={fieldOptions}
+                                        onchange={handleLatitudeFieldChange}
+                                        disabled={isLoadingFields}>
+                                    </lightning-combobox>
                                 </div>
-                            </template>
+                                <div class="slds-col slds-size_1-of-2">
+                                    <lightning-combobox
+                                        name="longitudeField"
+                                        label="Longitude Field"
+                                        placeholder="Select field..."
+                                        value={longitudeField}
+                                        options={fieldOptions}
+                                        onchange={handleLongitudeFieldChange}
+                                        disabled={isLoadingFields}>
+                                    </lightning-combobox>
+                                </div>
+                            </div>
 
+                            <!-- Address fields - show for Google Maps -->
                             <template if:true={isGoogleMaps}>
+                                <p class="slds-text-body_small slds-text-color_weak slds-m-top_small slds-m-bottom_x-small">
+                                    Or map address fields for geocoding:
+                                </p>
                                 <lightning-combobox
                                     name="streetField"
                                     label="Street Field"
