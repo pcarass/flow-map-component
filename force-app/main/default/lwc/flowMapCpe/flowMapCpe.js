@@ -469,6 +469,17 @@ export default class FlowMapCpe extends LightningElement {
     get drawingExpanded() { return this.expandedSections.drawing; }
     get listSearchExpanded() { return this.expandedSections.listSearch; }
     
+    // Chevron icons for sections
+    get basicChevron() { return this.expandedSections.basic ? 'utility:chevrondown' : 'utility:chevronright'; }
+    get mapTypeChevron() { return this.expandedSections.mapType ? 'utility:chevrondown' : 'utility:chevronright'; }
+    get dataSourceChevron() { return this.expandedSections.dataSource ? 'utility:chevrondown' : 'utility:chevronright'; }
+    get fieldMappingsChevron() { return this.expandedSections.fieldMappings ? 'utility:chevrondown' : 'utility:chevronright'; }
+    get mapCenterChevron() { return this.expandedSections.mapCenter ? 'utility:chevrondown' : 'utility:chevronright'; }
+    get markerStyleChevron() { return this.expandedSections.markerStyle ? 'utility:chevrondown' : 'utility:chevronright'; }
+    get clusteringChevron() { return this.expandedSections.clustering ? 'utility:chevrondown' : 'utility:chevronright'; }
+    get drawingChevron() { return this.expandedSections.drawing ? 'utility:chevrondown' : 'utility:chevronright'; }
+    get listSearchChevron() { return this.expandedSections.listSearch ? 'utility:chevrondown' : 'utility:chevronright'; }
+    
     // ============================================
     // INPUT CHANGE HANDLERS
     // ============================================
