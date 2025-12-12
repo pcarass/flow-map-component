@@ -178,6 +178,8 @@ export default class FlowMap extends LightningElement {
         console.log('FlowMap: latitudeField =', this.latitudeField);
         console.log('FlowMap: longitudeField =', this.longitudeField);
         console.log('FlowMap: listViewVisibility =', this.listViewVisibility);
+        console.log('FlowMap: listPosition =', this.listPosition);
+        console.log('FlowMap: listCollapsible =', this.listCollapsible);
         this.loadMapData();
     }
     
@@ -249,6 +251,10 @@ export default class FlowMap extends LightningElement {
     
     get collapseToggleTitle() {
         return this.isListCollapsed ? 'Expand list' : 'Collapse list';
+    }
+    
+    get isListExpanded() {
+        return !this.isListCollapsed;
     }
     
     get collapseButtonClasses() {
