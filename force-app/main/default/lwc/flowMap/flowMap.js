@@ -473,6 +473,7 @@ export default class FlowMap extends LightningElement {
     
     async loadMarkersFromQuery() {
         if (!this.objectApiName) {
+            console.log('FlowMap: No objectApiName provided, skipping query');
             this.markers = [];
             return;
         }
@@ -492,6 +493,11 @@ export default class FlowMap extends LightningElement {
             customIconField: this.customIconField
         };
         
+        console.log('FlowMap: Loading data for', this.objectApiName);
+        console.log('FlowMap: Field mappings:', JSON.stringify(fieldMappings));
+        console.log('FlowMap: Filter:', this.queryFilter);
+        console.log('FlowMap: Limit:', this.recordLimit);
+        
         const result = await getMapData({
             objectApiName: this.objectApiName,
             fieldMappingsJson: JSON.stringify(fieldMappings),
@@ -499,7 +505,10 @@ export default class FlowMap extends LightningElement {
             recordLimit: this.recordLimit
         });
         
+        console.log('FlowMap: Received', result?.length || 0, 'records');
+        
         this.markers = this.normalizeMarkers(result);
+        console.log('FlowMap: Normalized to', this.markers.length, 'markers');
     }
     
     normalizeMarkers(rawMarkers) {
