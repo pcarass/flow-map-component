@@ -347,10 +347,8 @@ export default class FlowMap extends LightningElement {
     }
     
     get mapCenter() {
-        // Use dynamic center if set (for navigating to selected marker)
-        if (this.dynamicMapCenter) {
-            return this.dynamicMapCenter;
-        }
+        // For Google Maps: Return null to let lightning-map auto-fit to all markers
+        // Only override if user explicitly set a center location
         if (this.centerLatitude && this.centerLongitude) {
             return {
                 Latitude: parseFloat(this.centerLatitude),
@@ -366,17 +364,7 @@ export default class FlowMap extends LightningElement {
                 Street: this.centerStreet
             };
         }
-        // Auto-calculate from markers
-        if (this.filteredMarkers.length > 0) {
-            const lats = this.filteredMarkers.filter(m => m.latitude).map(m => m.latitude);
-            const lngs = this.filteredMarkers.filter(m => m.longitude).map(m => m.longitude);
-            if (lats.length > 0 && lngs.length > 0) {
-                return {
-                    Latitude: lats.reduce((a, b) => a + b, 0) / lats.length,
-                    Longitude: lngs.reduce((a, b) => a + b, 0) / lngs.length
-                };
-            }
-        }
+        // Return null - let lightning-map auto-fit to markers
         return null;
     }
     
@@ -534,13 +522,30 @@ export default class FlowMap extends LightningElement {
         if (!Array.isArray(rawMarkers)) return [];
         
         return rawMarkers.map((m, index) => {
+            // Handle compound address field (returns an object in Salesforce)
+            let addressString = '';
+            if (m.address && typeof m.address === 'object') {
+                // Compound address - extract components
+                addressString = [
+                    m.address.street,
+                    m.address.city,
+                    m.address.state,
+                    m.address.postalCode,
+                    m.address.country
+                ].filter(Boolean).join(', ');
+            } else if (typeof m.address === 'string') {
+                addressString = m.address;
+            } else if (typeof m.Address === 'string') {
+                addressString = m.Address;
+            }
+            
             const marker = {
                 id: m.id || m.Id || m.recordId || `marker_${index}`,
                 title: m.title || m.Title || m.name || m.Name || `Location ${index + 1}`,
                 description: m.description || m.Description || '',
                 latitude: parseFloat(m.latitude || m.Latitude || m.lat) || null,
                 longitude: parseFloat(m.longitude || m.Longitude || m.lng || m.lon) || null,
-                address: m.address || m.Address || '',
+                address: addressString,
                 street: m.street || m.Street || '',
                 city: m.city || m.City || '',
                 state: m.state || m.State || '',
@@ -551,7 +556,7 @@ export default class FlowMap extends LightningElement {
                 listItemClass: 'slds-item marker-list-item'
             };
             
-            // Build address if not provided
+            // Build address if not provided but components exist
             if (!marker.address && (marker.street || marker.city)) {
                 marker.address = [marker.street, marker.city, marker.state, marker.postalCode, marker.country]
                     .filter(Boolean)
@@ -987,26 +992,12 @@ export default class FlowMap extends LightningElement {
             // Update list styling immediately
             this.applyMarkerListClasses();
             
-            // Center map on selected marker
+            // Center map on selected marker (Leaflet only - Google Maps handles this automatically)
             if (this.useLeafletMaps && this.leafletMap && marker.latitude && marker.longitude) {
-                // Leaflet: use setView
-                this.leafletMap.setView([marker.latitude, marker.longitude], this.zoomLevel);
-            } else if (this.useGoogleMaps) {
-                // Google Maps: update center to pan to marker
-                // Build address-based center if no coordinates
-                if (marker.latitude && marker.longitude) {
-                    this.dynamicMapCenter = {
-                        Latitude: parseFloat(marker.latitude),
-                        Longitude: parseFloat(marker.longitude)
-                    };
-                } else if (marker.city || marker.country) {
-                    this.dynamicMapCenter = {
-                        City: marker.city || '',
-                        State: marker.state || '',
-                        Country: marker.country || ''
-                    };
-                }
+                this.leafletMap.setView([marker.latitude, marker.longitude], this.zoomLevel || 14);
             }
+            // Note: For Google Maps, the lightning-map component handles marker selection
+            // and centering automatically via the selected-marker-value attribute
             
             // Batch dispatch Flow attribute changes to prevent multiple re-renders
             Promise.resolve().then(() => {
