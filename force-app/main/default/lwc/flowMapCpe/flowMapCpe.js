@@ -168,9 +168,6 @@ export default class FlowMapCpe extends LightningElement {
     // These should NEVER be overwritten by initializeValues
     _userChangedProps = new Set();
     
-    // Track if we've done the initial default dispatch
-    _defaultsDispatched = false;
-    
     initializeValues() {
         console.log('FlowMapCpe: initializeValues called with', this._inputVariables?.length || 0, 'variables');
         
@@ -264,45 +261,9 @@ export default class FlowMapCpe extends LightningElement {
         console.log('FlowMapCpe: Field mappings - title:', this.titleField, 'city:', this.cityField, 'street:', this.streetField);
         console.log('FlowMapCpe: List settings - visibility:', this.listViewVisibility, 'position:', this.listPosition);
         
-        // Dispatch defaults only once on first load
-        if (!this._defaultsDispatched) {
-            this._defaultsDispatched = true;
-            // Use setTimeout to ensure this happens after the current render cycle
-            // eslint-disable-next-line @lwc/lwc/no-async-operation
-            setTimeout(() => {
-                this.dispatchDefaultsIfNeeded(valueMap);
-            }, 100);
-        }
-    }
-    
-    /**
-     * Dispatch default values for key properties that Flow Builder might not have saved
-     * This ensures the properties are saved even if the user doesn't explicitly change them
-     * Only dispatches if user hasn't already changed the property
-     */
-    dispatchDefaultsIfNeeded(valueMap) {
-        console.log('FlowMapCpe: dispatchDefaultsIfNeeded called');
-        
-        // Key properties that must be saved for the component to work correctly
-        const keyDefaults = {
-            'mapType': this.mapType,
-            'sourceType': this.sourceType,
-            'listViewVisibility': this.listViewVisibility,
-            'listPosition': this.listPosition
-        };
-        
-        // Dispatch any key properties that weren't in the inputVariables
-        // AND haven't been changed by the user
-        Object.entries(keyDefaults).forEach(([prop, value]) => {
-            if (this._userChangedProps.has(prop)) {
-                console.log('FlowMapCpe: Skipping default dispatch for', prop, '- user changed');
-                return;
-            }
-            if (valueMap[prop] === undefined || valueMap[prop] === null) {
-                console.log('FlowMapCpe: Dispatching default for', prop, '=', value);
-                this.dispatchValueChange(prop, value, 'String');
-            }
-        });
+        // NOTE: We do NOT dispatch defaults here anymore.
+        // Flow Builder will use the defaults from meta.xml.
+        // We only dispatch when the user actually changes a value.
     }
     
     parseBooleanValue(value) {
