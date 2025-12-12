@@ -23,6 +23,8 @@
             <!-- ============================================ -->
             <property name="mapType" type="String" label="Map Type" default="google" 
                       description="Select Google Maps (max 100 markers) or Leaflet (unlimited markers, clustering, drawing)"/>
+            <property name="googleMapStyle" type="String" label="Google Map Style" default="roadmap" 
+                      description="Map style for Google Maps: roadmap, satellite, terrain, or hybrid"/>
             
             <!-- ============================================ -->
             <!-- DATA SOURCE CONFIGURATION -->
@@ -190,6 +192,22 @@
                       description="Show a filter button with popover"/>
             <property name="filterFieldsJson" type="String" label="Filter Fields JSON" 
                       description="JSON array defining filter fields. Each object: {fieldName, label, type, options (for picklist)}"/>
+            
+            <!-- ============================================ -->
+            <!-- POPUP CONFIGURATION -->
+            <!-- ============================================ -->
+            <property name="enablePopups" type="Boolean" label="Enable Popups" default="false" 
+                      description="Show info popup when clicking markers"/>
+            <property name="popupFieldsJson" type="String" label="Popup Fields JSON" 
+                      description="JSON array of field API names to display in popup"/>
+            <property name="showViewRecordAction" type="Boolean" label="Show View Record Action" default="true" 
+                      description="Show View Record button in popup"/>
+            <property name="showDirectionsAction" type="Boolean" label="Show Directions Action" default="true" 
+                      description="Show Get Directions button in popup"/>
+            <property name="showCallAction" type="Boolean" label="Show Call Action" default="false" 
+                      description="Show Call button in popup"/>
+            <property name="phoneField" type="String" label="Phone Field" 
+                      description="API name of phone field for Call action"/>
             
             <!-- ============================================ -->
             <!-- HEADER BUTTONS -->
