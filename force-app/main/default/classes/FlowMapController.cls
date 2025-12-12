@@ -363,9 +363,6 @@ public with sharing class FlowMapController {
             }
         }
         
-        // Sort by label
-        objects.sort();
-        
         return objects;
     }
     
@@ -402,9 +399,6 @@ public with sharing class FlowMapController {
                     });
                 }
             }
-            
-            // Sort by label
-            fields.sort();
             
         } catch (Exception e) {
             // Return empty list on error
